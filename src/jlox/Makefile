@@ -1,0 +1,3 @@
+go.fmt:
+	go mod tidy
+	go fmt ./...
