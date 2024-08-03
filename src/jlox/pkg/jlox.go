@@ -2,6 +2,7 @@ package jlox
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -30,13 +31,18 @@ func RunPrompt(stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
 		s, _ := r.ReadString('\n')
 		s = strings.ReplaceAll(strings.ReplaceAll(strings.ToLower(s), " ", ""), "\n", "")
 		if s == "" {
-			continue
-		} else if s == "exit" {
 			break
 		}
 
-		if err := Run(s); err != nil {
-			fmt.Println(fmt.Errorf("could not run prompt: %s", err))
+		if errs := Run(s); errs != nil {
+			fmt.Println(errs)
+
+			for _, err := range errs {
+				if err.IsFatal() {
+					return errors.New("encountered fatal error, exiting")
+				}
+			}
+
 			continue
 		}
 	}
@@ -44,7 +50,7 @@ func RunPrompt(stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
 	return nil
 }
 
-func Run(s string) error {
+func Run(s string) []*JLoxError {
 	scanner := NewScanner(s)
 	if err := scanner.scanTokens(); err != nil {
 		return err

@@ -5,30 +5,31 @@ import (
 )
 
 type Scanner struct {
-	tokens []Token
-	source string
+	Tokens []Token
+	Source string
+	Errors []*JLoxError
 
-	start   int
-	current int
-	line    int
+	Start   int
+	Current int
+	Line    int
 }
 
 func NewScanner(source string) *Scanner {
 	return &Scanner{
-		tokens:  nil,
-		source:  source,
-		start:   0,
-		current: 0,
-		line:    1,
+		Tokens:  nil,
+		Source:  source,
+		Start:   0,
+		Current: 0,
+		Line:    1,
 	}
 }
 
 func (scanner *Scanner) addToken(t TokenType, literal any) {
-	scanner.tokens = append(scanner.tokens, Token{
+	scanner.Tokens = append(scanner.Tokens, Token{
 		tokenType: t,
-		lexeme:    scanner.source[scanner.start:scanner.current],
+		lexeme:    scanner.Source[scanner.Start:scanner.Current],
 		literal:   literal,
-		line:      scanner.line,
+		line:      scanner.Line,
 	})
 }
 
@@ -37,31 +38,35 @@ func (scanner *Scanner) addTokenNoLiteral(t TokenType) {
 }
 
 func (scanner *Scanner) isAtEnd() bool {
-	return scanner.current >= len(scanner.source)
+	return scanner.Current >= len(scanner.Source)
 }
 
-func (scanner *Scanner) scanTokens() error {
+func (scanner *Scanner) scanTokens() []*JLoxError {
 	for !scanner.isAtEnd() {
-		scanner.start = scanner.current
+		scanner.Start = scanner.Current
 		if err := scanner.scanToken(); err != nil {
-			return err
+			scanner.Errors = append(scanner.Errors, err)
 		}
 	}
 
-	scanner.tokens = append(scanner.tokens, Token{EOF, "", nil, scanner.line})
+	if scanner.Errors != nil {
+		return scanner.Errors
+	}
 
-	fmt.Println(scanner.tokens)
+	scanner.Tokens = append(scanner.Tokens, Token{EOF, "", nil, scanner.Line})
+
+	fmt.Println(scanner.Tokens)
 
 	return nil
 }
 
 func (scanner *Scanner) advance() byte {
-	char := scanner.source[scanner.current]
-	scanner.current++
+	char := scanner.Source[scanner.Current]
+	scanner.Current++
 	return char
 }
 
-func (scanner *Scanner) scanToken() error {
+func (scanner *Scanner) scanToken() *JLoxError {
 	switch char := string(scanner.advance()); char {
 	case "(":
 		scanner.addTokenNoLiteral(LEFT_PARENS)
@@ -83,8 +88,10 @@ func (scanner *Scanner) scanToken() error {
 		scanner.addTokenNoLiteral(SEMICOLON)
 	case "*":
 		scanner.addTokenNoLiteral(STAR)
+	case "x":
+		return NewJLoxError(fmt.Errorf("unexpected character: %s", char), true)
 	default:
-		return fmt.Errorf("unexpected character: %s", char)
+		return NewJLoxError(fmt.Errorf("unexpected character: %s", char), false)
 	}
 
 	return nil
