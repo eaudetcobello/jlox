@@ -29,12 +29,15 @@ func RunPrompt(stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
 		fmt.Fprint(stdout, "jlox> ")
 		s, _ := r.ReadString('\n')
 		s = strings.ReplaceAll(strings.ReplaceAll(strings.ToLower(s), " ", ""), "\n", "")
-		if s == "" || s == "exit" {
+		if s == "" {
+			continue
+		} else if s == "exit" {
 			break
 		}
 
 		if err := Run(s); err != nil {
-			return err
+			fmt.Println(fmt.Errorf("could not run prompt: %s", err))
+			continue
 		}
 	}
 

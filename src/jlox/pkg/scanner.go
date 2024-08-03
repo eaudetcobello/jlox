@@ -1,7 +1,6 @@
 package jlox
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -85,7 +84,7 @@ func (scanner *Scanner) scanToken() error {
 	case "*":
 		scanner.addTokenNoLiteral(STAR)
 	default:
-		return errors.New("unexpected character")
+		return fmt.Errorf("unexpected character: %s", char)
 	}
 
 	return nil
