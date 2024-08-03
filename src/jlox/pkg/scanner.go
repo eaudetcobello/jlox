@@ -28,7 +28,7 @@ func (scanner *Scanner) addToken(t TokenType, literal any) {
 	scanner.Tokens = append(scanner.Tokens, Token{
 		tokenType: t,
 		lexeme:    scanner.Source[scanner.Start:scanner.Current],
-		literal:   literal,
+		literal:   &literal,
 		line:      scanner.Line,
 	})
 }
@@ -55,7 +55,9 @@ func (scanner *Scanner) scanTokens() []*JLoxError {
 
 	scanner.Tokens = append(scanner.Tokens, Token{EOF, "", nil, scanner.Line})
 
-	fmt.Println(scanner.Tokens)
+	for i, t := range scanner.Tokens {
+		fmt.Printf("%d %s\n", i+1, t.String())
+	}
 
 	return nil
 }
@@ -64,6 +66,20 @@ func (scanner *Scanner) advance() byte {
 	char := scanner.Source[scanner.Current]
 	scanner.Current++
 	return char
+}
+
+func (scanner *Scanner) ifMatchAdvance(expected string) bool {
+	if scanner.isAtEnd() {
+		return false
+	}
+
+	if string(scanner.Source[scanner.Current]) != expected {
+		return false
+	}
+
+	scanner.Current++
+
+	return true
 }
 
 func (scanner *Scanner) scanToken() *JLoxError {
@@ -88,6 +104,30 @@ func (scanner *Scanner) scanToken() *JLoxError {
 		scanner.addTokenNoLiteral(SEMICOLON)
 	case "*":
 		scanner.addTokenNoLiteral(STAR)
+	case "!":
+		if scanner.ifMatchAdvance("=") {
+			scanner.addTokenNoLiteral(BANG_EQUAL)
+			break
+		}
+		scanner.addTokenNoLiteral(BANG)
+	case "=":
+		if scanner.ifMatchAdvance("=") {
+			scanner.addTokenNoLiteral(EQUAL_EQUAL)
+			break
+		}
+		scanner.addTokenNoLiteral(EQUAL)
+	case "<":
+		if scanner.ifMatchAdvance("=") {
+			scanner.addTokenNoLiteral(LESS_EQUAL)
+			break
+		}
+		scanner.addTokenNoLiteral(LESS)
+	case ">":
+		if scanner.ifMatchAdvance("=") {
+			scanner.addTokenNoLiteral(GREATER_EQUAL)
+			break
+		}
+		scanner.addTokenNoLiteral(GREATER)
 	case "x":
 		return NewJLoxError(fmt.Errorf("unexpected character: %s", char), true)
 	default:
