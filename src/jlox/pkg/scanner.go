@@ -26,10 +26,10 @@ func NewScanner(source string) *Scanner {
 
 func (scanner *Scanner) addToken(t TokenType, literal any) {
 	scanner.Tokens = append(scanner.Tokens, Token{
-		tokenType: t,
-		lexeme:    scanner.Source[scanner.Start:scanner.Current],
-		literal:   &literal,
-		line:      scanner.Line,
+		TokenType: t,
+		Lexeme:    scanner.Source[scanner.Start:scanner.Current],
+		Literal:   &literal,
+		Line:      scanner.Line,
 	})
 }
 
@@ -53,7 +53,13 @@ func (scanner *Scanner) scanTokens() []*JLoxError {
 		return scanner.Errors
 	}
 
-	scanner.Tokens = append(scanner.Tokens, Token{EOF, "", nil, scanner.Line})
+	eofToken := Token{
+		TokenType: EOF,
+		Lexeme:    "",
+		Literal:   nil,
+		Line:      scanner.Line,
+	}
+	scanner.Tokens = append(scanner.Tokens, eofToken)
 
 	for i, t := range scanner.Tokens {
 		fmt.Printf("%d %s\n", i+1, t.String())
@@ -62,13 +68,13 @@ func (scanner *Scanner) scanTokens() []*JLoxError {
 	return nil
 }
 
-func (scanner *Scanner) advance() byte {
+func (scanner *Scanner) consume() byte {
 	char := scanner.Source[scanner.Current]
 	scanner.Current++
 	return char
 }
 
-func (scanner *Scanner) ifMatchAdvance(expected string) bool {
+func (scanner *Scanner) matchAndConsume(expected string) bool {
 	if scanner.isAtEnd() {
 		return false
 	}
@@ -82,8 +88,35 @@ func (scanner *Scanner) ifMatchAdvance(expected string) bool {
 	return true
 }
 
+func (scanner *Scanner) peek() string {
+	if scanner.isAtEnd() {
+		return "\\0"
+	}
+	return string(scanner.Source[scanner.Current])
+}
+
+func (scanner *Scanner) string() *JLoxError {
+	for scanner.peek() != "\"" && !scanner.isAtEnd() {
+		if scanner.peek() == "\n" {
+			scanner.Line++
+		}
+		scanner.consume()
+	}
+
+	if scanner.isAtEnd() {
+		return NewJLoxError(fmt.Errorf("unterminated string"), false)
+	}
+
+	scanner.consume()
+
+	strVal := scanner.Source[scanner.Start+1 : scanner.Current-1]
+	scanner.addToken(STRING, strVal)
+
+	return nil
+}
+
 func (scanner *Scanner) scanToken() *JLoxError {
-	switch char := string(scanner.advance()); char {
+	switch char := string(scanner.consume()); char {
 	case "(":
 		scanner.addTokenNoLiteral(LEFT_PARENS)
 	case ")":
@@ -105,29 +138,43 @@ func (scanner *Scanner) scanToken() *JLoxError {
 	case "*":
 		scanner.addTokenNoLiteral(STAR)
 	case "!":
-		if scanner.ifMatchAdvance("=") {
+		if scanner.matchAndConsume("=") {
 			scanner.addTokenNoLiteral(BANG_EQUAL)
 			break
 		}
 		scanner.addTokenNoLiteral(BANG)
 	case "=":
-		if scanner.ifMatchAdvance("=") {
+		if scanner.matchAndConsume("=") {
 			scanner.addTokenNoLiteral(EQUAL_EQUAL)
 			break
 		}
 		scanner.addTokenNoLiteral(EQUAL)
 	case "<":
-		if scanner.ifMatchAdvance("=") {
+		if scanner.matchAndConsume("=") {
 			scanner.addTokenNoLiteral(LESS_EQUAL)
 			break
 		}
 		scanner.addTokenNoLiteral(LESS)
 	case ">":
-		if scanner.ifMatchAdvance("=") {
+		if scanner.matchAndConsume("=") {
 			scanner.addTokenNoLiteral(GREATER_EQUAL)
 			break
 		}
 		scanner.addTokenNoLiteral(GREATER)
+	case string('"'):
+		scanner.string()
+	case "/":
+		if scanner.matchAndConsume("/") {
+			for scanner.peek() != "\n" && !scanner.isAtEnd() {
+				scanner.consume()
+			}
+			break
+		}
+		scanner.addTokenNoLiteral(SLASH)
+	case " ", "\r", "\t":
+		break
+	case "\n":
+		scanner.Line++
 	case "x":
 		return NewJLoxError(fmt.Errorf("unexpected character: %s", char), true)
 	default:

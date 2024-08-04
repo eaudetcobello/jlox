@@ -3,14 +3,17 @@ package jlox
 import "fmt"
 
 type Token struct {
-	tokenType TokenType
-	lexeme    string
-	literal   *any
-	line      int
+	TokenType TokenType
+	Lexeme    string
+	Literal   *any
+	Line      int
 }
 
 func (t Token) String() string {
-	return fmt.Sprintf("type: %s lexeme: %s literal: %v line: %d", t.tokenType, t.lexeme, "nil", t.line)
+	if t.Literal != nil {
+		return fmt.Sprintf("type: %s lexeme: %s literal: %v line: %d", t.TokenType, t.Lexeme, *t.Literal, t.Line)
+	}
+	return fmt.Sprintf("type: %s lexeme: nil literal: nil line: %d", t.TokenType, t.Line)
 }
 
 type TokenType int
@@ -36,6 +39,8 @@ const (
 	GREATER_EQUAL
 	LESS
 	LESS_EQUAL
+
+	STRING
 
 	EOF
 )
@@ -80,6 +85,8 @@ func (t TokenType) String() string {
 		return "LESS"
 	case LESS_EQUAL:
 		return "LESS_EQUAL"
+	case STRING:
+		return "STRING"
 	case EOF:
 		return "EOF"
 	default:
