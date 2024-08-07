@@ -49,5 +49,9 @@ func Run(s string) ErrorList {
 		return err
 	}
 
+	for i, t := range scanner.Tokens {
+		fmt.Printf("%d %s\n", i+1, t.String())
+	}
+
 	return nil
 }

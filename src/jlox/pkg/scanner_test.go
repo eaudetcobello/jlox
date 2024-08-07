@@ -19,17 +19,20 @@ func TestNewScanner(t *testing.T) {
 	g.Expect(scanner.Line).To(Equal(1))
 }
 
-func TestScanErrorInPrompt(t *testing.T) {
+func TestScanErrorsInPrompt(t *testing.T) {
 	g := NewWithT(t)
 
-	scanner := NewScanner("~~~")
+	scanner := NewScanner("125.4 ~~~ {}")
 	errs := scanner.scanTokens()
 
 	g.Expect(errs).To(HaveLen(3))
+	g.Expect(errs).To(MatchError("error: unexpected character (and 2 more errors)"))
 	for _, err := range errs {
 		g.Expect(err).To(HaveOccurred())
 		g.Expect(err).To(MatchError("error: unexpected character"))
 	}
+
+	g.Expect(scanner.Tokens).To(HaveLen(4))
 }
 
 func TestScanTokensInPrompt(t *testing.T) {

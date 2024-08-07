@@ -1,7 +1,6 @@
 package jlox
 
 import (
-	"fmt"
 	"strconv"
 
 	cmdutil "github.com/eaudetcobello/jlox/util"
@@ -61,10 +60,6 @@ func (scanner *Scanner) scanTokens() ErrorList {
 		}
 	}
 
-	if len(scanner.Errors) > 0 {
-		return scanner.Errors
-	}
-
 	eofToken := Token{
 		TokenType: EOF,
 		Lexeme:    "",
@@ -73,8 +68,8 @@ func (scanner *Scanner) scanTokens() ErrorList {
 	}
 	scanner.Tokens = append(scanner.Tokens, eofToken)
 
-	for i, t := range scanner.Tokens {
-		fmt.Printf("%d %s\n", i+1, t.String())
+	if len(scanner.Errors) > 0 {
+		return scanner.Errors
 	}
 
 	return nil
