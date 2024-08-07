@@ -5,13 +5,13 @@ import "fmt"
 type Token struct {
 	TokenType TokenType
 	Lexeme    string
-	Literal   *any
+	Literal   interface{}
 	Line      int
 }
 
 func (t Token) String() string {
 	if t.Literal != nil {
-		return fmt.Sprintf("type: %s lexeme: %s literal: %v line: %d", t.TokenType, t.Lexeme, *t.Literal, t.Line)
+		return fmt.Sprintf("type: %s lexeme: %s literal: %s line: %d", t.TokenType, t.Lexeme, t.Literal, t.Line)
 	}
 	return fmt.Sprintf("type: %s lexeme: nil literal: nil line: %d", t.TokenType, t.Line)
 }
@@ -41,6 +41,7 @@ const (
 	LESS_EQUAL
 
 	STRING
+	NUMBER
 
 	EOF
 )
@@ -87,6 +88,8 @@ func (t TokenType) String() string {
 		return "LESS_EQUAL"
 	case STRING:
 		return "STRING"
+	case NUMBER:
+		return "NUMBER"
 	case EOF:
 		return "EOF"
 	default:

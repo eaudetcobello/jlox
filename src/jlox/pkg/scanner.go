@@ -2,12 +2,15 @@ package jlox
 
 import (
 	"fmt"
+	"strconv"
+
+	cmdutil "github.com/eaudetcobello/jlox/util"
 )
 
 type Scanner struct {
 	Tokens []Token
 	Source string
-	Errors []*JLoxError
+	Errors ErrorList
 
 	Start   int
 	Current int
@@ -24,13 +27,22 @@ func NewScanner(source string) *Scanner {
 	}
 }
 
-func (scanner *Scanner) addToken(t TokenType, literal any) {
-	scanner.Tokens = append(scanner.Tokens, Token{
-		TokenType: t,
-		Lexeme:    scanner.Source[scanner.Start:scanner.Current],
-		Literal:   &literal,
-		Line:      scanner.Line,
-	})
+func (scanner *Scanner) addToken(t TokenType, literal interface{}) {
+	if literal == nil {
+		scanner.Tokens = append(scanner.Tokens, Token{
+			TokenType: t,
+			Lexeme:    scanner.Source[scanner.Start:scanner.Current],
+			Literal:   nil,
+			Line:      scanner.Line,
+		})
+	} else {
+		scanner.Tokens = append(scanner.Tokens, Token{
+			TokenType: t,
+			Lexeme:    scanner.Source[scanner.Start:scanner.Current],
+			Literal:   literal,
+			Line:      scanner.Line,
+		})
+	}
 }
 
 func (scanner *Scanner) addTokenNoLiteral(t TokenType) {
@@ -41,15 +53,15 @@ func (scanner *Scanner) isAtEnd() bool {
 	return scanner.Current >= len(scanner.Source)
 }
 
-func (scanner *Scanner) scanTokens() []*JLoxError {
+func (scanner *Scanner) scanTokens() ErrorList {
 	for !scanner.isAtEnd() {
 		scanner.Start = scanner.Current
 		if err := scanner.scanToken(); err != nil {
-			scanner.Errors = append(scanner.Errors, err)
+			scanner.Errors.Add(err.Msg)
 		}
 	}
 
-	if scanner.Errors != nil {
+	if len(scanner.Errors) > 0 {
 		return scanner.Errors
 	}
 
@@ -88,23 +100,31 @@ func (scanner *Scanner) matchAndConsume(expected string) bool {
 	return true
 }
 
-func (scanner *Scanner) peek() string {
+func (scanner *Scanner) Peek() string {
 	if scanner.isAtEnd() {
 		return "\\0"
 	}
 	return string(scanner.Source[scanner.Current])
 }
 
-func (scanner *Scanner) string() *JLoxError {
-	for scanner.peek() != "\"" && !scanner.isAtEnd() {
-		if scanner.peek() == "\n" {
+func (scanner *Scanner) PeekNext() string {
+	if scanner.Current+1 >= len(scanner.Source) {
+		return "\\0"
+	}
+
+	return string(scanner.Source[scanner.Current+1])
+}
+
+func (scanner *Scanner) string() *Error {
+	for scanner.Peek() != "\"" && !scanner.isAtEnd() {
+		if scanner.Peek() == "\n" {
 			scanner.Line++
 		}
 		scanner.consume()
 	}
 
 	if scanner.isAtEnd() {
-		return NewJLoxError(fmt.Errorf("unterminated string"), false)
+		return &Error{"unterminated string"}
 	}
 
 	scanner.consume()
@@ -115,7 +135,29 @@ func (scanner *Scanner) string() *JLoxError {
 	return nil
 }
 
-func (scanner *Scanner) scanToken() *JLoxError {
+func (scanner *Scanner) number() *Error {
+	for cmdutil.IsDigit(scanner.Peek()) {
+		scanner.consume()
+	}
+
+	if scanner.Peek() == "." && cmdutil.IsDigit(scanner.PeekNext()) {
+		scanner.consume()
+
+		for cmdutil.IsDigit(scanner.Peek()) {
+			scanner.consume()
+		}
+	}
+
+	v, err := strconv.ParseFloat(scanner.Source[scanner.Start:scanner.Current], 64)
+	if err != nil {
+		return &Error{"could not parse number"}
+	}
+	scanner.addToken(NUMBER, v)
+
+	return nil
+}
+
+func (scanner *Scanner) scanToken() *Error {
 	switch char := string(scanner.consume()); char {
 	case "(":
 		scanner.addTokenNoLiteral(LEFT_PARENS)
@@ -165,7 +207,7 @@ func (scanner *Scanner) scanToken() *JLoxError {
 		scanner.string()
 	case "/":
 		if scanner.matchAndConsume("/") {
-			for scanner.peek() != "\n" && !scanner.isAtEnd() {
+			for scanner.Peek() != "\n" && !scanner.isAtEnd() {
 				scanner.consume()
 			}
 			break
@@ -175,10 +217,12 @@ func (scanner *Scanner) scanToken() *JLoxError {
 		break
 	case "\n":
 		scanner.Line++
-	case "x":
-		return NewJLoxError(fmt.Errorf("unexpected character: %s", char), true)
 	default:
-		return NewJLoxError(fmt.Errorf("unexpected character: %s", char), false)
+		if cmdutil.IsDigit(char) {
+			scanner.number()
+		} else {
+			return &Error{"unexpected character"}
+		}
 	}
 
 	return nil

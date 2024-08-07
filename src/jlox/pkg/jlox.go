@@ -2,7 +2,6 @@ package jlox
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -27,7 +26,7 @@ func RunFile(fileName string) error {
 func RunPrompt(stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
 	for {
 		r := bufio.NewReader(stdin)
-		fmt.Fprint(stdout, "jlox> ")
+		fmt.Fprint(stdout, "> ")
 		s, _ := r.ReadString('\n')
 		s = strings.ReplaceAll(strings.ReplaceAll(strings.ToLower(s), " ", ""), "\n", "")
 		if s == "" {
@@ -35,13 +34,7 @@ func RunPrompt(stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
 		}
 
 		if errs := Run(s); errs != nil {
-			fmt.Println(errs)
-
-			for _, err := range errs {
-				if err.IsFatal() {
-					return errors.New("encountered fatal error, exiting")
-				}
-			}
+			PrintError(stderr, errs)
 
 			continue
 		}
@@ -50,7 +43,7 @@ func RunPrompt(stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
 	return nil
 }
 
-func Run(s string) []*JLoxError {
+func Run(s string) ErrorList {
 	scanner := NewScanner(s)
 	if err := scanner.scanTokens(); err != nil {
 		return err
