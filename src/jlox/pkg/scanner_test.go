@@ -51,7 +51,7 @@ func TestUnterminatedString(t *testing.T) {
 func TestEatCharacter(t *testing.T) {
 	g := NewWithT(t)
 
-	scanner := NewScanner("a😅1+ ⌘ 語")
+	scanner := NewScanner("a😅1+ ⌘ 語\n\t")
 
 	char := scanner.eatCharacter()
 	g.Expect(char).To(Equal('a'))
@@ -76,6 +76,12 @@ func TestEatCharacter(t *testing.T) {
 
 	char = scanner.eatCharacter()
 	g.Expect(char).To(Equal('語'))
+
+	char = scanner.eatCharacter()
+	g.Expect(char).To(Equal('\n'))
+
+	char = scanner.eatCharacter()
+	g.Expect(char).To(Equal('\t'))
 }
 
 func TestScanTokensInPrompt(t *testing.T) {
