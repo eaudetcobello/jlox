@@ -1,9 +1,10 @@
 package jlox
 
 import (
+	"fmt"
 	"strconv"
-
-	cmdutil "github.com/eaudetcobello/jlox/util"
+	"unicode"
+	"unicode/utf8"
 )
 
 type Scanner struct {
@@ -75,18 +76,18 @@ func (scanner *Scanner) scanTokens() ErrorList {
 	return nil
 }
 
-func (scanner *Scanner) consume() byte {
-	char := scanner.Source[scanner.Current]
-	scanner.Current++
+func (scanner *Scanner) eatCharacter() rune {
+	char, width := utf8.DecodeRuneInString(scanner.Source[scanner.Current:])
+	scanner.Current += width
 	return char
 }
 
-func (scanner *Scanner) matchAndConsume(expected string) bool {
+func (scanner *Scanner) ifMatchEat(expected rune) bool {
 	if scanner.isAtEnd() {
 		return false
 	}
 
-	if string(scanner.Source[scanner.Current]) != expected {
+	if rune(scanner.Source[scanner.Current]) != expected {
 		return false
 	}
 
@@ -95,34 +96,34 @@ func (scanner *Scanner) matchAndConsume(expected string) bool {
 	return true
 }
 
-func (scanner *Scanner) Peek() string {
+func (scanner *Scanner) Peek() rune {
 	if scanner.isAtEnd() {
-		return "\\0"
+		return '\x00'
 	}
-	return string(scanner.Source[scanner.Current])
+	return rune(scanner.Source[scanner.Current])
 }
 
-func (scanner *Scanner) PeekNext() string {
+func (scanner *Scanner) PeekNext() rune {
 	if scanner.Current+1 >= len(scanner.Source) {
-		return "\\0"
+		return '\x00'
 	}
 
-	return string(scanner.Source[scanner.Current+1])
+	return rune(scanner.Source[scanner.Current+1])
 }
 
 func (scanner *Scanner) string() *Error {
-	for scanner.Peek() != "\"" && !scanner.isAtEnd() {
-		if scanner.Peek() == "\n" {
+	for scanner.Peek() != '"' && !scanner.isAtEnd() {
+		if scanner.Peek() == '\n' {
 			scanner.Line++
 		}
-		scanner.consume()
+		scanner.eatCharacter()
 	}
 
 	if scanner.isAtEnd() {
 		return &Error{"unterminated string"}
 	}
 
-	scanner.consume()
+	scanner.eatCharacter()
 
 	strVal := scanner.Source[scanner.Start+1 : scanner.Current-1]
 	scanner.addToken(STRING, strVal)
@@ -131,15 +132,15 @@ func (scanner *Scanner) string() *Error {
 }
 
 func (scanner *Scanner) number() *Error {
-	for cmdutil.IsDigit(scanner.Peek()) {
-		scanner.consume()
+	for unicode.IsDigit(scanner.Peek()) {
+		scanner.eatCharacter()
 	}
 
-	if scanner.Peek() == "." && cmdutil.IsDigit(scanner.PeekNext()) {
-		scanner.consume()
+	if scanner.Peek() == '.' && unicode.IsDigit(scanner.PeekNext()) {
+		scanner.eatCharacter()
 
-		for cmdutil.IsDigit(scanner.Peek()) {
-			scanner.consume()
+		for unicode.IsDigit(scanner.Peek()) {
+			scanner.eatCharacter()
 		}
 	}
 
@@ -153,70 +154,70 @@ func (scanner *Scanner) number() *Error {
 }
 
 func (scanner *Scanner) scanToken() *Error {
-	switch char := string(scanner.consume()); char {
-	case "(":
+	switch char := scanner.eatCharacter(); char {
+	case '(':
 		scanner.addTokenNoLiteral(LEFT_PARENS)
-	case ")":
+	case ')':
 		scanner.addTokenNoLiteral(RIGHT_PARENS)
-	case "{":
+	case '{':
 		scanner.addTokenNoLiteral(LEFT_BRACE)
-	case "}":
+	case '}':
 		scanner.addTokenNoLiteral(RIGHT_BRACE)
-	case ",":
+	case ',':
 		scanner.addTokenNoLiteral(COMMA)
-	case ".":
+	case '.':
 		scanner.addTokenNoLiteral(DOT)
-	case "-":
+	case '-':
 		scanner.addTokenNoLiteral(MINUS)
-	case "+":
+	case '+':
 		scanner.addTokenNoLiteral(PLUS)
-	case ";":
+	case ';':
 		scanner.addTokenNoLiteral(SEMICOLON)
-	case "*":
+	case '*':
 		scanner.addTokenNoLiteral(STAR)
-	case "!":
-		if scanner.matchAndConsume("=") {
+	case '!':
+		if scanner.ifMatchEat('=') {
 			scanner.addTokenNoLiteral(BANG_EQUAL)
 			break
 		}
 		scanner.addTokenNoLiteral(BANG)
-	case "=":
-		if scanner.matchAndConsume("=") {
+	case '=':
+		if scanner.ifMatchEat('=') {
 			scanner.addTokenNoLiteral(EQUAL_EQUAL)
 			break
 		}
 		scanner.addTokenNoLiteral(EQUAL)
-	case "<":
-		if scanner.matchAndConsume("=") {
+	case '<':
+		if scanner.ifMatchEat('=') {
 			scanner.addTokenNoLiteral(LESS_EQUAL)
 			break
 		}
 		scanner.addTokenNoLiteral(LESS)
-	case ">":
-		if scanner.matchAndConsume("=") {
+	case '>':
+		if scanner.ifMatchEat('=') {
 			scanner.addTokenNoLiteral(GREATER_EQUAL)
 			break
 		}
 		scanner.addTokenNoLiteral(GREATER)
-	case string('"'):
-		scanner.string()
-	case "/":
-		if scanner.matchAndConsume("/") {
-			for scanner.Peek() != "\n" && !scanner.isAtEnd() {
-				scanner.consume()
+	case '"':
+		return scanner.string()
+	case '/':
+		if scanner.ifMatchEat('/') {
+			for scanner.Peek() != '\n' && !scanner.isAtEnd() {
+				scanner.eatCharacter()
 			}
 			break
 		}
 		scanner.addTokenNoLiteral(SLASH)
-	case " ", "\r", "\t":
+	case ' ', '\r', '\t':
 		break
-	case "\n":
+	case '\n':
 		scanner.Line++
 	default:
-		if cmdutil.IsDigit(char) {
+		if unicode.IsDigit(char) {
 			scanner.number()
 		} else {
-			return &Error{"unexpected character"}
+			return &Error{fmt.Sprintf("unexpected character %s", string(char))}
 		}
 	}
 

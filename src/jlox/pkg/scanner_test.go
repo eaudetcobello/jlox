@@ -26,13 +26,56 @@ func TestScanErrorsInPrompt(t *testing.T) {
 	errs := scanner.scanTokens()
 
 	g.Expect(errs).To(HaveLen(3))
-	g.Expect(errs).To(MatchError("error: unexpected character (and 2 more errors)"))
+	g.Expect(errs).To(MatchError("error: unexpected character ~ (and 2 more errors)"))
 	for _, err := range errs {
 		g.Expect(err).To(HaveOccurred())
-		g.Expect(err).To(MatchError("error: unexpected character"))
+		g.Expect(err).To(MatchError("error: unexpected character ~"))
 	}
 
 	g.Expect(scanner.Tokens).To(HaveLen(4))
+}
+
+func TestUnterminatedString(t *testing.T) {
+	g := NewWithT(t)
+
+	scanner := NewScanner("123.4\"")
+	errs := scanner.scanTokens()
+
+	g.Expect(errs).To(HaveLen(1))
+	g.Expect(errs[0]).To(MatchError("error: unterminated string"))
+	g.Expect(scanner.Tokens[0].TokenType).To(Equal(NUMBER))
+	g.Expect(scanner.Tokens[1].TokenType).To(Equal(EOF))
+	g.Expect(scanner.Tokens).To(HaveLen(2))
+}
+
+func TestEatCharacter(t *testing.T) {
+	g := NewWithT(t)
+
+	scanner := NewScanner("a😅1+ ⌘ 語")
+
+	char := scanner.eatCharacter()
+	g.Expect(char).To(Equal('a'))
+
+	char = scanner.eatCharacter()
+	g.Expect(char).To(Equal('😅'))
+
+	char = scanner.eatCharacter()
+	g.Expect(char).To(Equal('1'))
+
+	char = scanner.eatCharacter()
+	g.Expect(char).To(Equal('+'))
+
+	char = scanner.eatCharacter()
+	g.Expect(char).To(Equal(' '))
+
+	char = scanner.eatCharacter()
+	g.Expect(char).To(Equal('⌘'))
+
+	char = scanner.eatCharacter()
+	g.Expect(char).To(Equal(' '))
+
+	char = scanner.eatCharacter()
+	g.Expect(char).To(Equal('語'))
 }
 
 func TestScanTokensInPrompt(t *testing.T) {
@@ -44,7 +87,7 @@ func TestScanTokensInPrompt(t *testing.T) {
 		expectedTokens []Token
 	}{
 		{
-			source: "<>!==!.{=}",
+			source: "<>!==!.{=}==",
 			expectedTokens: []Token{
 				{TokenType: LESS, Lexeme: "<", Literal: nil, Line: 1},
 				{TokenType: GREATER, Lexeme: ">", Literal: nil, Line: 1},
@@ -55,6 +98,7 @@ func TestScanTokensInPrompt(t *testing.T) {
 				{TokenType: LEFT_BRACE, Lexeme: "{", Literal: nil, Line: 1},
 				{TokenType: EQUAL, Lexeme: "=", Literal: nil, Line: 1},
 				{TokenType: RIGHT_BRACE, Lexeme: "}", Literal: nil, Line: 1},
+				{TokenType: EQUAL_EQUAL, Lexeme: "==", Literal: nil, Line: 1},
 				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
 			},
 		},

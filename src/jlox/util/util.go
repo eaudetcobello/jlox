@@ -2,7 +2,6 @@ package cmdutil
 
 import (
 	"os"
-	"strconv"
 )
 
 func ReadFile(name string) ([]byte, error) {
@@ -13,11 +12,4 @@ func ReadFile(name string) ([]byte, error) {
 	}
 
 	return bytes, nil
-}
-
-func IsDigit(str string) bool {
-	if _, err := strconv.Atoi(str); err != nil {
-		return false
-	}
-	return true
 }
