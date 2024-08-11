@@ -28,3 +28,7 @@ jobs:
     - name: Format
       working-directory: src/jlox
       run: go fmt ./...
+
+    - name: Test
+      working-directory: src/jlox
+      run: go test ./...
