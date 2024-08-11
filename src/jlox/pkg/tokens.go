@@ -19,7 +19,8 @@ func (t Token) String() string {
 type TokenType int
 
 const (
-	LEFT_PARENS TokenType = iota
+	UNKNOWN TokenType = iota // When keywords returns 0 for unknown [string]TokenType, it will match UNKNOWN TokenType
+	LEFT_PARENS
 	RIGHT_PARENS
 	LEFT_BRACE
 	RIGHT_BRACE
@@ -43,8 +44,45 @@ const (
 	STRING
 	NUMBER
 
+	IDENTIFIER
+	AND
+	CLASS
+	ELSE
+	FALSE
+	FOR
+	FUN
+	IF
+	NIL
+	OR
+	PRINT
+	RETURN
+	SUPER
+	THIS
+	TRUE
+	VAR
+	WHILE
+
 	EOF
 )
+
+var keywords = map[string]TokenType{
+	"and":    AND,
+	"class":  CLASS,
+	"else":   ELSE,
+	"false":  FALSE,
+	"for":    FOR,
+	"fun":    FUN,
+	"if":     IF,
+	"nil":    NIL,
+	"or":     OR,
+	"print":  PRINT,
+	"return": RETURN,
+	"super":  SUPER,
+	"this":   THIS,
+	"true":   TRUE,
+	"var":    VAR,
+	"while":  WHILE,
+}
 
 func (t TokenType) String() string {
 	switch t {
@@ -90,6 +128,40 @@ func (t TokenType) String() string {
 		return "STRING"
 	case NUMBER:
 		return "NUMBER"
+	case IDENTIFIER:
+		return "IDENTIFIER"
+	case AND:
+		return "AND"
+	case CLASS:
+		return "CLASS"
+	case ELSE:
+		return "ELSE"
+	case FALSE:
+		return "FALSE"
+	case FOR:
+		return "FOR"
+	case FUN:
+		return "FUN"
+	case IF:
+		return "IF"
+	case NIL:
+		return "NIL"
+	case OR:
+		return "OR"
+	case PRINT:
+		return "PRINT"
+	case RETURN:
+		return "RETURN"
+	case SUPER:
+		return "SUPER"
+	case THIS:
+		return "THIS"
+	case TRUE:
+		return "TRUE"
+	case VAR:
+		return "VAR"
+	case WHILE:
+		return "WHILE"
 	case EOF:
 		return "EOF"
 	default:

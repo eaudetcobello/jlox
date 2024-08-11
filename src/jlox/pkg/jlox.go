@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"strings"
 
 	cmdutil "github.com/eaudetcobello/jlox/util"
 )
@@ -28,7 +27,6 @@ func RunPrompt(stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
 		r := bufio.NewReader(stdin)
 		fmt.Fprint(stdout, "> ")
 		s, _ := r.ReadString('\n')
-		s = strings.ReplaceAll(strings.ToLower(s), " ", "")
 		if s == "" {
 			break
 		}

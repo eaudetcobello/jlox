@@ -114,7 +114,7 @@ func (scanner *Scanner) PeekNext() rune {
 func (scanner *Scanner) string() *Error {
 	for scanner.Peek() != '"' && !scanner.isAtEnd() {
 		if scanner.Peek() == '\n' {
-			scanner.Line++
+			scanner.Line++ // @We should store a string's first and last line
 		}
 		scanner.eatCharacter()
 	}
@@ -149,6 +149,25 @@ func (scanner *Scanner) number() *Error {
 		return &Error{"could not parse number"}
 	}
 	scanner.addToken(NUMBER, v)
+
+	return nil
+}
+
+func (scanner *Scanner) identifier() *Error {
+	char := scanner.Peek()
+	for unicode.IsLetter(char) || unicode.IsNumber(char) {
+		scanner.eatCharacter()
+		char = scanner.Peek()
+	}
+
+	text := string(scanner.Source[scanner.Start:scanner.Current])
+
+	token := keywords[text]
+
+	if token == TokenType(0) { // @Hack?
+		token = IDENTIFIER
+	}
+	scanner.addTokenNoLiteral(token)
 
 	return nil
 }
@@ -216,6 +235,8 @@ func (scanner *Scanner) scanToken() *Error {
 	default:
 		if unicode.IsDigit(char) {
 			scanner.number()
+		} else if unicode.IsLetter(char) {
+			scanner.identifier()
 		} else {
 			return &Error{fmt.Sprintf("unexpected character %s", string(char))}
 		}

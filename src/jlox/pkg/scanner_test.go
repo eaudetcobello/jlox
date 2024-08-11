@@ -7,18 +7,6 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestNewScanner(t *testing.T) {
-	g := NewWithT(t)
-
-	scanner := NewScanner("abc123")
-	g.Expect(scanner).NotTo(BeNil())
-
-	g.Expect(scanner.Tokens).To(BeNil())
-	g.Expect(scanner.Source).To(Equal("abc123"))
-	g.Expect(scanner.Current).To(Equal(0))
-	g.Expect(scanner.Line).To(Equal(1))
-}
-
 func TestScanErrorsInPrompt(t *testing.T) {
 	g := NewWithT(t)
 
@@ -33,19 +21,6 @@ func TestScanErrorsInPrompt(t *testing.T) {
 	}
 
 	g.Expect(scanner.Tokens).To(HaveLen(4))
-}
-
-func TestUnterminatedString(t *testing.T) {
-	g := NewWithT(t)
-
-	scanner := NewScanner("123.4\"")
-	errs := scanner.scanTokens()
-
-	g.Expect(errs).To(HaveLen(1))
-	g.Expect(errs[0]).To(MatchError("error: unterminated string"))
-	g.Expect(scanner.Tokens[0].TokenType).To(Equal(NUMBER))
-	g.Expect(scanner.Tokens[1].TokenType).To(Equal(EOF))
-	g.Expect(scanner.Tokens).To(HaveLen(2))
 }
 
 func TestEatCharacter(t *testing.T) {
@@ -89,11 +64,40 @@ func TestScanTokensInPrompt(t *testing.T) {
 
 	for _, tc := range []struct {
 		source         string
-		ptrValue       *any
 		expectedTokens []Token
+		expectedErrs   *ErrorList
 	}{
 		{
-			source: "<>!==!.{=}==",
+			source: "if and or ifandor",
+			expectedTokens: []Token{
+				{TokenType: IF, Lexeme: "if", Literal: nil, Line: 1},
+				{TokenType: AND, Lexeme: "and", Literal: nil, Line: 1},
+				{TokenType: OR, Lexeme: "or", Literal: nil, Line: 1},
+				{TokenType: IDENTIFIER, Lexeme: "ifandor", Literal: nil, Line: 1},
+				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
+			},
+		},
+		{
+			source: "123.4\"",
+			expectedTokens: []Token{
+				{TokenType: NUMBER, Lexeme: "123.4", Literal: 123.4, Line: 1},
+				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
+			},
+			expectedErrs: &ErrorList{
+				&Error{"unterminated string"},
+			},
+		},
+		{
+			source: `"abc
+def"
+			`,
+			expectedTokens: []Token{
+				{TokenType: STRING, Lexeme: "\"abc\ndef\"", Literal: "abc\ndef", Line: 2},
+				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 3},
+			},
+		},
+		{
+			source: "<>!==!.{=}==<=>=+-;/*,",
 			expectedTokens: []Token{
 				{TokenType: LESS, Lexeme: "<", Literal: nil, Line: 1},
 				{TokenType: GREATER, Lexeme: ">", Literal: nil, Line: 1},
@@ -105,6 +109,14 @@ func TestScanTokensInPrompt(t *testing.T) {
 				{TokenType: EQUAL, Lexeme: "=", Literal: nil, Line: 1},
 				{TokenType: RIGHT_BRACE, Lexeme: "}", Literal: nil, Line: 1},
 				{TokenType: EQUAL_EQUAL, Lexeme: "==", Literal: nil, Line: 1},
+				{TokenType: LESS_EQUAL, Lexeme: "<=", Literal: nil, Line: 1},
+				{TokenType: GREATER_EQUAL, Lexeme: ">=", Literal: nil, Line: 1},
+				{TokenType: PLUS, Lexeme: "+", Literal: nil, Line: 1},
+				{TokenType: MINUS, Lexeme: "-", Literal: nil, Line: 1},
+				{TokenType: SEMICOLON, Lexeme: ";", Literal: nil, Line: 1},
+				{TokenType: SLASH, Lexeme: "/", Literal: nil, Line: 1},
+				{TokenType: STAR, Lexeme: "*", Literal: nil, Line: 1},
+				{TokenType: COMMA, Lexeme: ",", Literal: nil, Line: 1},
 				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
 			},
 		},
@@ -155,6 +167,20 @@ func TestScanTokensInPrompt(t *testing.T) {
 			},
 		},
 		{
+			source: "\"\"",
+			expectedTokens: []Token{
+				{TokenType: STRING, Lexeme: "\"\"", Literal: "", Line: 1},
+				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
+			},
+		},
+		{
+			source: "\"    1 \"",
+			expectedTokens: []Token{
+				{TokenType: STRING, Lexeme: "\"    1 \"", Literal: "    1 ", Line: 1},
+				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
+			},
+		},
+		{
 			source: "",
 			expectedTokens: []Token{
 				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
@@ -164,7 +190,11 @@ func TestScanTokensInPrompt(t *testing.T) {
 		t.Run(fmt.Sprintf("scan %s", tc.source), func(t *testing.T) {
 			scanner := NewScanner(tc.source)
 			err := scanner.scanTokens()
-			g.Expect(err).To(BeNil())
+			if tc.expectedErrs == nil {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(Equal(*tc.expectedErrs))
+			}
 			g.Expect(scanner.Tokens).To(Equal(tc.expectedTokens))
 		})
 	}
