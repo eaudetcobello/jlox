@@ -89,11 +89,10 @@ func TestScanTokensInPrompt(t *testing.T) {
 		},
 		{
 			source: `"abc
-def"
-			`,
+def"`,
 			expectedTokens: []Token{
 				{TokenType: STRING, Lexeme: "\"abc\ndef\"", Literal: "abc\ndef", Line: 2},
-				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 3},
+				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 2},
 			},
 		},
 		{
