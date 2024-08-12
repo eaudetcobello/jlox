@@ -27,37 +27,28 @@ func NewScanner(source string) *Scanner {
 	}
 }
 
-func (scanner *Scanner) addToken(t TokenType, literal interface{}) {
-	if literal == nil {
-		scanner.Tokens = append(scanner.Tokens, Token{
-			TokenType: t,
-			Lexeme:    scanner.Source[scanner.Start:scanner.Current],
-			Literal:   nil,
-			Line:      scanner.Line,
-		})
-	} else {
-		scanner.Tokens = append(scanner.Tokens, Token{
-			TokenType: t,
-			Lexeme:    scanner.Source[scanner.Start:scanner.Current],
-			Literal:   literal,
-			Line:      scanner.Line,
-		})
-	}
+func (s *Scanner) addToken(t TokenType, literal interface{}) {
+	s.Tokens = append(s.Tokens, Token{
+		TokenType: t,
+		Lexeme:    s.Source[s.Start:s.Current],
+		Literal:   literal,
+		Line:      s.Line,
+	})
 }
 
-func (scanner *Scanner) addTokenNoLiteral(t TokenType) {
-	scanner.addToken(t, nil)
+func (s *Scanner) addTokenNoLiteral(t TokenType) {
+	s.addToken(t, nil)
 }
 
-func (scanner *Scanner) isAtEnd() bool {
-	return scanner.Current >= len(scanner.Source)
+func (s *Scanner) isAtEnd() bool {
+	return s.Current >= len(s.Source)
 }
 
-func (scanner *Scanner) scanTokens() ErrorList {
-	for !scanner.isAtEnd() {
-		scanner.Start = scanner.Current
-		if err := scanner.scanToken(); err != nil {
-			scanner.Errors.Add(err.Msg)
+func (s *Scanner) scanTokens() ErrorList {
+	for !s.isAtEnd() {
+		s.Start = s.Current
+		if err := s.scanToken(); err != nil {
+			s.Errors.Add(err.Msg)
 		}
 	}
 
@@ -65,178 +56,178 @@ func (scanner *Scanner) scanTokens() ErrorList {
 		TokenType: EOF,
 		Lexeme:    "",
 		Literal:   nil,
-		Line:      scanner.Line,
+		Line:      s.Line,
 	}
-	scanner.Tokens = append(scanner.Tokens, eofToken)
+	s.Tokens = append(s.Tokens, eofToken)
 
-	if len(scanner.Errors) > 0 {
-		return scanner.Errors
+	if len(s.Errors) > 0 {
+		return s.Errors
 	}
 
 	return nil
 }
 
-func (scanner *Scanner) eatCharacter() rune {
-	char, width := utf8.DecodeRuneInString(scanner.Source[scanner.Current:])
-	scanner.Current += width
+func (s *Scanner) eatCharacter() rune {
+	char, width := utf8.DecodeRuneInString(s.Source[s.Current:])
+	s.Current += width
 	return char
 }
 
-func (scanner *Scanner) ifMatchEat(expected rune) bool {
-	if scanner.isAtEnd() {
+func (s *Scanner) ifMatchEat(expected rune) bool {
+	if s.isAtEnd() {
 		return false
 	}
 
-	if rune(scanner.Source[scanner.Current]) != expected {
+	if rune(s.Source[s.Current]) != expected {
 		return false
 	}
 
-	scanner.Current++
+	s.Current++
 
 	return true
 }
 
-func (scanner *Scanner) Peek() rune {
-	if scanner.isAtEnd() {
+func (s *Scanner) peek() rune {
+	if s.isAtEnd() {
 		return '\x00'
 	}
-	return rune(scanner.Source[scanner.Current])
+	return rune(s.Source[s.Current])
 }
 
-func (scanner *Scanner) PeekNext() rune {
-	if scanner.Current+1 >= len(scanner.Source) {
+func (s *Scanner) peekNext() rune {
+	if s.Current+1 >= len(s.Source) {
 		return '\x00'
 	}
 
-	return rune(scanner.Source[scanner.Current+1])
+	return rune(s.Source[s.Current+1])
 }
 
-func (scanner *Scanner) string() *Error {
-	for scanner.Peek() != '"' && !scanner.isAtEnd() {
-		if scanner.Peek() == '\n' {
-			scanner.Line++ // @We should store a string's first and last line
+func (s *Scanner) string() *Error {
+	for s.peek() != '"' && !s.isAtEnd() {
+		if s.peek() == '\n' {
+			s.Line++ // @We should store a string's first and last line
 		}
-		scanner.eatCharacter()
+		s.eatCharacter()
 	}
 
-	if scanner.isAtEnd() {
+	if s.isAtEnd() {
 		return &Error{"unterminated string"}
 	}
 
-	scanner.eatCharacter()
+	s.eatCharacter()
 
-	strVal := scanner.Source[scanner.Start+1 : scanner.Current-1]
-	scanner.addToken(STRING, strVal)
+	strVal := s.Source[s.Start+1 : s.Current-1]
+	s.addToken(STRING, strVal)
 
 	return nil
 }
 
-func (scanner *Scanner) number() *Error {
-	for unicode.IsDigit(scanner.Peek()) {
-		scanner.eatCharacter()
+func (s *Scanner) number() *Error {
+	for unicode.IsDigit(s.peek()) {
+		s.eatCharacter()
 	}
 
-	if scanner.Peek() == '.' && unicode.IsDigit(scanner.PeekNext()) {
-		scanner.eatCharacter()
+	if s.peek() == '.' && unicode.IsDigit(s.peekNext()) {
+		s.eatCharacter()
 
-		for unicode.IsDigit(scanner.Peek()) {
-			scanner.eatCharacter()
+		for unicode.IsDigit(s.peek()) {
+			s.eatCharacter()
 		}
 	}
 
-	v, err := strconv.ParseFloat(scanner.Source[scanner.Start:scanner.Current], 64)
+	v, err := strconv.ParseFloat(s.Source[s.Start:s.Current], 64)
 	if err != nil {
 		return &Error{"could not parse number"}
 	}
-	scanner.addToken(NUMBER, v)
+	s.addToken(NUMBER, v)
 
 	return nil
 }
 
-func (scanner *Scanner) identifier() *Error {
-	char := scanner.Peek()
+func (s *Scanner) identifier() *Error {
+	char := s.peek()
 	for unicode.IsLetter(char) || unicode.IsNumber(char) {
-		scanner.eatCharacter()
-		char = scanner.Peek()
+		s.eatCharacter()
+		char = s.peek()
 	}
 
-	text := string(scanner.Source[scanner.Start:scanner.Current])
+	text := string(s.Source[s.Start:s.Current])
 
 	token := keywords[text]
 
 	if token == TokenType(0) { // @Hack?
 		token = IDENTIFIER
 	}
-	scanner.addTokenNoLiteral(token)
+	s.addTokenNoLiteral(token)
 
 	return nil
 }
 
-func (scanner *Scanner) scanToken() *Error {
-	switch char := scanner.eatCharacter(); char {
+func (s *Scanner) scanToken() *Error {
+	switch char := s.eatCharacter(); char {
 	case '(':
-		scanner.addTokenNoLiteral(LEFT_PARENS)
+		s.addTokenNoLiteral(LEFT_PARENS)
 	case ')':
-		scanner.addTokenNoLiteral(RIGHT_PARENS)
+		s.addTokenNoLiteral(RIGHT_PARENS)
 	case '{':
-		scanner.addTokenNoLiteral(LEFT_BRACE)
+		s.addTokenNoLiteral(LEFT_BRACE)
 	case '}':
-		scanner.addTokenNoLiteral(RIGHT_BRACE)
+		s.addTokenNoLiteral(RIGHT_BRACE)
 	case ',':
-		scanner.addTokenNoLiteral(COMMA)
+		s.addTokenNoLiteral(COMMA)
 	case '.':
-		scanner.addTokenNoLiteral(DOT)
+		s.addTokenNoLiteral(DOT)
 	case '-':
-		scanner.addTokenNoLiteral(MINUS)
+		s.addTokenNoLiteral(MINUS)
 	case '+':
-		scanner.addTokenNoLiteral(PLUS)
+		s.addTokenNoLiteral(PLUS)
 	case ';':
-		scanner.addTokenNoLiteral(SEMICOLON)
+		s.addTokenNoLiteral(SEMICOLON)
 	case '*':
-		scanner.addTokenNoLiteral(STAR)
+		s.addTokenNoLiteral(STAR)
 	case '!':
-		if scanner.ifMatchEat('=') {
-			scanner.addTokenNoLiteral(BANG_EQUAL)
+		if s.ifMatchEat('=') {
+			s.addTokenNoLiteral(BANG_EQUAL)
 			break
 		}
-		scanner.addTokenNoLiteral(BANG)
+		s.addTokenNoLiteral(BANG)
 	case '=':
-		if scanner.ifMatchEat('=') {
-			scanner.addTokenNoLiteral(EQUAL_EQUAL)
+		if s.ifMatchEat('=') {
+			s.addTokenNoLiteral(EQUAL_EQUAL)
 			break
 		}
-		scanner.addTokenNoLiteral(EQUAL)
+		s.addTokenNoLiteral(EQUAL)
 	case '<':
-		if scanner.ifMatchEat('=') {
-			scanner.addTokenNoLiteral(LESS_EQUAL)
+		if s.ifMatchEat('=') {
+			s.addTokenNoLiteral(LESS_EQUAL)
 			break
 		}
-		scanner.addTokenNoLiteral(LESS)
+		s.addTokenNoLiteral(LESS)
 	case '>':
-		if scanner.ifMatchEat('=') {
-			scanner.addTokenNoLiteral(GREATER_EQUAL)
+		if s.ifMatchEat('=') {
+			s.addTokenNoLiteral(GREATER_EQUAL)
 			break
 		}
-		scanner.addTokenNoLiteral(GREATER)
+		s.addTokenNoLiteral(GREATER)
 	case '"':
-		return scanner.string()
+		return s.string()
 	case '/':
-		if scanner.ifMatchEat('/') {
-			for scanner.Peek() != '\n' && !scanner.isAtEnd() {
-				scanner.eatCharacter()
+		if s.ifMatchEat('/') {
+			for s.peek() != '\n' && !s.isAtEnd() {
+				s.eatCharacter()
 			}
 			break
 		}
-		scanner.addTokenNoLiteral(SLASH)
+		s.addTokenNoLiteral(SLASH)
 	case ' ', '\r', '\t':
 		break
 	case '\n':
-		scanner.Line++
+		s.Line++
 	default:
 		if unicode.IsDigit(char) {
-			scanner.number()
+			s.number()
 		} else if unicode.IsLetter(char) {
-			scanner.identifier()
+			s.identifier()
 		} else {
 			return &Error{fmt.Sprintf("unexpected character %s", string(char))}
 		}

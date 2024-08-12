@@ -26,36 +26,36 @@ func TestScanErrorsInPrompt(t *testing.T) {
 func TestEatCharacter(t *testing.T) {
 	g := NewWithT(t)
 
-	scanner := NewScanner("a😅1+ ⌘ 語\n\t")
+	s := NewScanner("a😅1+ ⌘ 語\n\t")
 
-	char := scanner.eatCharacter()
+	char := s.eatCharacter()
 	g.Expect(char).To(Equal('a'))
 
-	char = scanner.eatCharacter()
+	char = s.eatCharacter()
 	g.Expect(char).To(Equal('😅'))
 
-	char = scanner.eatCharacter()
+	char = s.eatCharacter()
 	g.Expect(char).To(Equal('1'))
 
-	char = scanner.eatCharacter()
+	char = s.eatCharacter()
 	g.Expect(char).To(Equal('+'))
 
-	char = scanner.eatCharacter()
+	char = s.eatCharacter()
 	g.Expect(char).To(Equal(' '))
 
-	char = scanner.eatCharacter()
+	char = s.eatCharacter()
 	g.Expect(char).To(Equal('⌘'))
 
-	char = scanner.eatCharacter()
+	char = s.eatCharacter()
 	g.Expect(char).To(Equal(' '))
 
-	char = scanner.eatCharacter()
+	char = s.eatCharacter()
 	g.Expect(char).To(Equal('語'))
 
-	char = scanner.eatCharacter()
+	char = s.eatCharacter()
 	g.Expect(char).To(Equal('\n'))
 
-	char = scanner.eatCharacter()
+	char = s.eatCharacter()
 	g.Expect(char).To(Equal('\t'))
 }
 
@@ -187,14 +187,14 @@ def"`,
 		},
 	} {
 		t.Run(fmt.Sprintf("scan %s", tc.source), func(t *testing.T) {
-			scanner := NewScanner(tc.source)
-			err := scanner.scanTokens()
+			s := NewScanner(tc.source)
+			err := s.scanTokens()
 			if tc.expectedErrs == nil {
 				g.Expect(err).To(BeNil())
 			} else {
 				g.Expect(err).To(Equal(*tc.expectedErrs))
 			}
-			g.Expect(scanner.Tokens).To(Equal(tc.expectedTokens))
+			g.Expect(s.Tokens).To(Equal(tc.expectedTokens))
 		})
 	}
 }
