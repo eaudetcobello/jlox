@@ -153,12 +153,13 @@ func (s *Scanner) identifier() *Error {
 
 	text := string(s.Source[s.Start:s.Current])
 
-	token := keywords[text]
-
-	if token == TokenType(0) { // @Hack?
-		token = IDENTIFIER
+	// is the identifier a known keyword
+	if tokenType, ok := keywords[text]; ok {
+		s.addTokenNoLiteral(tokenType)
+		return nil
 	}
-	s.addTokenNoLiteral(token)
+
+	s.addTokenNoLiteral(IDENTIFIER)
 
 	return nil
 }

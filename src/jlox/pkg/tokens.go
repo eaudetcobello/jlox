@@ -10,10 +10,7 @@ type Token struct {
 }
 
 func (t Token) String() string {
-	if t.Literal != nil {
-		return fmt.Sprintf("type: %s lexeme: %s literal: %s line: %d", t.TokenType, t.Lexeme, t.Literal, t.Line)
-	}
-	return fmt.Sprintf("type: %s lexeme: nil literal: nil line: %d", t.TokenType, t.Line)
+	return fmt.Sprintf("type: %s lexeme: %q literal: %v line: %d", t.TokenType, t.Lexeme, t.Literal, t.Line)
 }
 
 type TokenType int
