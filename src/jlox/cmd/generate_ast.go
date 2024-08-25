@@ -17,7 +17,12 @@ var generateASTCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		if err := ast.GenerateAst(args[0], "Expr", []string{"hello"}); err != nil {
+		if err := ast.GenerateAst(args[0], []string{
+			"Binary : left Expr, operator Token, right Expr",
+			"Grouping : expression Expr",
+			"Literal : value interface{}",
+			"Unary : operator Token, right Expr",
+		}); err != nil {
 			fmt.Println("Error: ", err)
 			os.Exit(1)
 		}
