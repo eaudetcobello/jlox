@@ -9,19 +9,30 @@ import (
 // Parses a string in the format:
 // Binary : left Expr, operator Token, right Expr
 // Into a valid go struct definition
-func defineType(builder *strings.Builder, structName string, fields string) {
-	builder.WriteString(fmt.Sprintf("type %s struct {\n", structName))
+func defineType(builder *strings.Builder, structName string, fields string) error {
+	var tempBuilder strings.Builder
+
+	// use a tempbuilder so that we don't write to the real builder
+	// until we know no error has occurred
+	tempBuilder.WriteString(fmt.Sprintf("type %s struct {\n", structName))
 
 	for _, field := range strings.Split(fields, ",") {
 		parts := strings.Fields(field)
 
 		if len(parts) == 2 {
 			name, fieldType := parts[0], parts[1]
-			builder.WriteString(fmt.Sprintf("\t%s %s\n", name, fieldType))
+			tempBuilder.WriteString(fmt.Sprintf("\t%s %s\n", name, fieldType))
+			continue
 		}
+
+		return fmt.Errorf("field %v should have exactly two parts: field name and field name", parts)
 	}
 
-	builder.WriteString(fmt.Sprint("}\n\n"))
+	tempBuilder.WriteString(fmt.Sprint("}\n\n"))
+
+	builder.WriteString(tempBuilder.String())
+
+	return nil
 }
 
 func GenerateAst(outputDir string, types []string) error {
@@ -44,7 +55,9 @@ func GenerateAst(outputDir string, types []string) error {
 		structName := strings.Replace(strings.Split(t, ":")[0], " ", "", -1)
 		fields := strings.Split(t, ":")[1]
 
-		defineType(&builder, structName, fields)
+		if err := defineType(&builder, structName, fields); err != nil {
+			return err
+		}
 	}
 
 	err := os.WriteFile(outputDir, []byte(builder.String()), 0644)

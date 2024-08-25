@@ -1,12 +1,15 @@
 package ast
 
-import . "github.com/eaudetcobello/jlox/pkg"
+import jlox "github.com/eaudetcobello/jlox/pkg"
 
 type Expr interface{}
 
+// https://eli.thegreenplace.net/2018/the-expression-problem-in-go/
+type Eval interface{}
+
 type Binary struct {
 	left     Expr
-	operator Token
+	operator jlox.Token
 	right    Expr
 }
 
@@ -19,6 +22,6 @@ type Literal struct {
 }
 
 type Unary struct {
-	operator Token
+	operator jlox.Token
 	right    Expr
 }

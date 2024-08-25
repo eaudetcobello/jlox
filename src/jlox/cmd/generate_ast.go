@@ -18,7 +18,7 @@ var generateASTCmd = &cobra.Command{
 		}
 
 		if err := ast.GenerateAst(args[0], []string{
-			"Binary : left Expr, operator Token, right Expr",
+			"Binary : left Expr, operator Token , right Expr",
 			"Grouping : expression Expr",
 			"Literal : value interface{}",
 			"Unary : operator Token, right Expr",
