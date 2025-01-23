@@ -12,12 +12,15 @@ var generateASTCmd = &cobra.Command{
 	Use:   "generate-ast",
 	Short: "Generate AST",
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 1 {
-			fmt.Println("Usage: jlox generate-ast <output directory>")
-			os.Exit(1)
+		var filename string
+
+		if len(args) > 0 {
+			filename = args[0]
+		} else {
+			filename = ""
 		}
 
-		if err := ast.GenerateAst(args[0], []string{
+		if err := ast.GenerateAst(filename, []string{
 			"Binary : left Expr, operator Token , right Expr",
 			"Grouping : expression Expr",
 			"Literal : value interface{}",

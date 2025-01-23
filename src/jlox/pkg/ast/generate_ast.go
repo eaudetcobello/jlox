@@ -21,7 +21,7 @@ func defineType(builder *strings.Builder, structName string, fields string) erro
 
 		if len(parts) == 2 {
 			name, fieldType := parts[0], parts[1]
-			tempBuilder.WriteString(fmt.Sprintf("\t%s %s\n", name, fieldType))
+			tempBuilder.WriteString(fmt.Sprintf("  %s %s\n", name, fieldType))
 			continue
 		}
 
@@ -38,13 +38,6 @@ func defineType(builder *strings.Builder, structName string, fields string) erro
 func GenerateAst(outputDir string, types []string) error {
 	var builder strings.Builder
 
-	if _, err := os.Stat(outputDir); err == nil {
-		err := os.RemoveAll(outputDir)
-		if err != nil {
-			return err
-		}
-	}
-
 	builder.WriteString("package ast\n\n")
 
 	builder.WriteString("import . \"github.com/eaudetcobello/jlox/pkg\"\n\n")
@@ -60,10 +53,24 @@ func GenerateAst(outputDir string, types []string) error {
 		}
 	}
 
-	err := os.WriteFile(outputDir, []byte(builder.String()), 0644)
-	if err != nil {
-		return err
+
+	if outputDir != "" {
+		if _, err := os.Stat(outputDir); err == nil {
+			err := os.RemoveAll(outputDir)
+			if err != nil {
+				return err
+			}
+		}
+
+		err := os.WriteFile(outputDir, []byte(builder.String()), 0644)
+		if err != nil {
+			return err
+		}
+
+		return nil
 	}
+
+	fmt.Print(builder.String())
 
 	return nil
 }
