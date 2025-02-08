@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/eaudetcobello/jlox/pkg/ast"
+	jlox "github.com/eaudetcobello/jlox/pkg"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +20,7 @@ var generateASTCmd = &cobra.Command{
 			filename = ""
 		}
 
-		if err := ast.GenerateAst(filename, []string{
+		if err := jlox.GenerateAst(filename, []string{
 			"Binary : left Expr, operator Token , right Expr",
 			"Grouping : expression Expr",
 			"Literal : value interface{}",

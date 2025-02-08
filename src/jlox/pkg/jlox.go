@@ -8,8 +8,7 @@ import (
 	cmdutil "github.com/eaudetcobello/jlox/util"
 )
 
-type JLox struct {
-}
+type JLox struct{}
 
 func RunFile(fileName string) error {
 	fileContent, err := cmdutil.ReadFile(fileName)
@@ -49,6 +48,12 @@ func Run(s string) ErrorList {
 
 	for i, t := range scanner.Tokens {
 		fmt.Printf("%d %s\n", i+1, t.String())
+	}
+
+	_ = Parser{
+		Tokens:  scanner.Tokens,
+		Current: 0,
+		Errors:  ErrorList{},
 	}
 
 	return nil
