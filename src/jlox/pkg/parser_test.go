@@ -24,7 +24,7 @@ func TestIsAtEnd(t *testing.T) {
 	g.Expect(p.isAtEnd()).To(BeTrue())
 }
 
-func TestCurrentTokenHasType(t *testing.T) {
+func TestCheck(t *testing.T) {
 	g := NewWithT(t)
 
 	p := Parser{
@@ -35,12 +35,12 @@ func TestCurrentTokenHasType(t *testing.T) {
 		Current: 0,
 	}
 
-	g.Expect(p.currentTokenHasType(IF)).To(BeTrue())
+	g.Expect(p.check(IF)).To(BeTrue())
 
 	p.advance()
 
-	g.Expect(p.currentTokenHasType(EOF)).To(BeTrue())
-	g.Expect(p.currentTokenHasType(IF)).To(BeFalse())
+	g.Expect(p.check(EOF)).To(BeTrue())
+	g.Expect(p.check(IF)).To(BeFalse())
 }
 
 func TestPeek(t *testing.T) {
@@ -87,7 +87,7 @@ func TestAdvance(t *testing.T) {
 	g.Expect(p.Current).To(Equal(2))
 }
 
-func TestIfMatchEat(t *testing.T) {
+func TestMatch(t *testing.T) {
 	g := NewWithT(t)
 
 	p := Parser{
@@ -98,15 +98,15 @@ func TestIfMatchEat(t *testing.T) {
 		Current: 0,
 	}
 
-	isMatch := p.ifMatchEat(AND)
+	isMatch := p.match(AND)
 	g.Expect(isMatch).To(BeFalse())
 	g.Expect(p.Current).To(Equal(0))
 
-	isMatch = p.ifMatchEat(OR, IF)
+	isMatch = p.match(OR, IF)
 	g.Expect(isMatch).To(BeTrue())
 	g.Expect(p.Current).To(Equal(1))
 
-	isMatch = p.ifMatchEat(EOF)
+	isMatch = p.match(EOF)
 	g.Expect(isMatch).To(BeTrue())
 	g.Expect(p.Current).To(Equal(1))
 }

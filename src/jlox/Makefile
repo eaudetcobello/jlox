@@ -10,3 +10,9 @@ ast:
 .PHONY: test
 test:
 	go test ./...
+
+build:
+	go build .
+
+run-interactive: build
+	go run . run

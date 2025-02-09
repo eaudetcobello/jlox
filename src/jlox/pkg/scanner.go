@@ -48,7 +48,7 @@ func (s *Scanner) scanTokens() ErrorList {
 	for !s.isAtEnd() {
 		s.Start = s.Current
 		if err := s.scanToken(); err != nil {
-			s.Errors.Add(err.Msg)
+			s.Errors.Add(err)
 		}
 	}
 
@@ -102,7 +102,7 @@ func (s *Scanner) peekNext() rune {
 	return rune(s.Source[s.Current+1])
 }
 
-func (s *Scanner) string() *Error {
+func (s *Scanner) string() error {
 	for s.peek() != '"' && !s.isAtEnd() {
 		if s.peek() == '\n' {
 			s.Line++ // @We should store a string's first and last line
@@ -164,7 +164,7 @@ func (s *Scanner) identifier() *Error {
 	return nil
 }
 
-func (s *Scanner) scanToken() *Error {
+func (s *Scanner) scanToken() error {
 	switch char := s.eatCharacter(); char {
 	case '(':
 		s.addTokenNoLiteral(LEFT_PARENS)

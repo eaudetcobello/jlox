@@ -50,11 +50,21 @@ func Run(s string) ErrorList {
 		fmt.Printf("%d %s\n", i+1, t.String())
 	}
 
-	_ = Parser{
+	parser := Parser{
 		Tokens:  scanner.Tokens,
 		Current: 0,
 		Errors:  ErrorList{},
 	}
+
+	var ast Expr
+	var err ErrorList
+	if ast, err = parser.parse(); err != nil {
+		fmt.Println("Error parsing")
+		return err
+	}
+
+	astPrinter := AstPrinter{}
+	fmt.Println(astPrinter.Print(ast))
 
 	return nil
 }

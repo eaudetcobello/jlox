@@ -6,8 +6,12 @@ type Parser struct {
 	Errors  ErrorList
 }
 
-func (p *Parser) parse() Expr {
-	return p.expression()
+func (p *Parser) parse() (Expr, ErrorList) {
+	expr := p.expression()
+	if len(p.Errors) > 0 {
+		return nil, p.Errors
+	}
+	return expr, nil
 }
 
 func (p *Parser) expression() Expr {
@@ -17,7 +21,7 @@ func (p *Parser) expression() Expr {
 func (p *Parser) equality() Expr {
 	expr := p.comparison()
 
-	for p.ifMatchEat(BANG_EQUAL, EQUAL_EQUAL) {
+	for p.match(BANG_EQUAL, EQUAL_EQUAL) {
 		operator := p.previous()
 		right := p.comparison()
 		expr = Binary{
@@ -33,7 +37,7 @@ func (p *Parser) equality() Expr {
 func (p *Parser) comparison() Expr {
 	expr := p.term()
 
-	for p.ifMatchEat(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL) {
+	for p.match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL) {
 		operator := p.previous()
 		right := p.term()
 		expr = Binary{
@@ -49,7 +53,7 @@ func (p *Parser) comparison() Expr {
 func (p *Parser) term() Expr {
 	expr := p.factor()
 
-	for p.ifMatchEat(MINUS, PLUS) {
+	for p.match(MINUS, PLUS) {
 		operator := p.previous()
 		right := p.factor()
 		expr = Binary{
@@ -65,7 +69,7 @@ func (p *Parser) term() Expr {
 func (p *Parser) factor() Expr {
 	expr := p.unary()
 
-	for p.ifMatchEat(SLASH, STAR) {
+	for p.match(SLASH, STAR) {
 		operator := p.previous()
 		right := p.unary()
 		expr = Binary{
@@ -79,7 +83,7 @@ func (p *Parser) factor() Expr {
 }
 
 func (p *Parser) unary() Expr {
-	if p.ifMatchEat(BANG, MINUS) {
+	if p.match(BANG, MINUS) {
 		operator := p.previous()
 		right := p.unary()
 		return Unary{
@@ -92,34 +96,38 @@ func (p *Parser) unary() Expr {
 }
 
 func (p *Parser) primary() Expr {
-	if p.ifMatchEat(FALSE) {
+	if p.match(FALSE) {
 		return Literal{false}
 	}
 
-	if p.ifMatchEat(TRUE) {
+	if p.match(TRUE) {
 		return Literal{true}
 	}
 
-	if p.ifMatchEat(NIL) {
+	if p.match(NIL) {
 		return Literal{nil}
 	}
 
-	if p.ifMatchEat(NUMBER, STRING) {
+	if p.match(NUMBER, STRING) {
 		return Literal{p.previous().Literal}
 	}
 
-	if p.ifMatchEat(LEFT_PARENS) {
+	if p.match(LEFT_PARENS) {
 		expr := p.expression()
-		p.mustEat(RIGHT_PARENS)
+		if err := p.consume(RIGHT_PARENS); err != nil {
+			p.Errors.Add(err)
+			p.synchronize()
+			return nil
+		}
 		return Grouping{expr}
 	}
 
 	return nil
 }
 
-func (p *Parser) ifMatchEat(types ...TokenType) bool {
+func (p *Parser) match(types ...TokenType) bool {
 	for _, t := range types {
-		if p.currentTokenHasType(t) {
+		if p.check(t) {
 			p.advance()
 			return true
 		}
@@ -128,18 +136,22 @@ func (p *Parser) ifMatchEat(types ...TokenType) bool {
 	return false
 }
 
-func (p *Parser) mustEat(t TokenType) {
-	if !p.ifMatchEat(t) {
-		panic("Expected token not found")
+func (p *Parser) consume(t TokenType) error {
+	if !p.match(t) {
+		err := &Error{"Expected token of type " + t.String()}
+		p.Errors.Add(err)
+		p.synchronize()
+		return err
 	}
+	return nil
 }
 
-func (p *Parser) currentTokenHasType(t TokenType) bool {
-	if p.Tokens[p.Current].TokenType == t {
-		return true
+func (p *Parser) check(t TokenType) bool {
+	if p.isAtEnd() {
+		return false
 	}
 
-	return false
+	return p.peek().TokenType == t
 }
 
 func (p *Parser) isAtEnd() bool {
@@ -161,20 +173,19 @@ func (p *Parser) advance() Token {
 	return p.previous()
 }
 
-//func (p *Parser) expression() Expr {
-//	return p.equality()
-//}
+func (p *Parser) synchronize() {
+	p.advance()
 
-//func (p *Parser) equality() Expr {
-//	expr := p.comparison()
-//
-//	for p.ifMatchEat(BANG_EQUAL, EQUAL_EQUAL) {
-//		operator := p.previous()
-//		right := p.comparison()
-//		expr = Binary{
-//			expr,
-//			operator,
-//			right,
-//		}
-//	}
-//}
+	for !p.isAtEnd() {
+		if p.previous().TokenType == SEMICOLON {
+			return
+		}
+
+		switch p.peek().TokenType {
+		case CLASS, FUN, VAR, FOR, IF, WHILE, PRINT, RETURN:
+			return
+		}
+
+		p.advance()
+	}
+}

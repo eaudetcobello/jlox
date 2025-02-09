@@ -16,10 +16,14 @@ func (e *Error) Error() string {
 	return fmt.Sprintf("error: %v", e.Msg)
 }
 
-type ErrorList []*Error
+type ErrorList []error
 
-func (p *ErrorList) Add(msg string) {
-	*p = append(*p, &Error{msg})
+func (p *ErrorList) Add(err error) {
+	if err == nil {
+		return // nil errors are ignored
+	}
+
+	*p = append(*p, err)
 }
 
 func (p ErrorList) Error() string {

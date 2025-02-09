@@ -3,21 +3,20 @@ package jlox
 type Expr interface{}
 
 type Binary struct {
-  left Expr
-  operator Token
-  right Expr
+	left     Expr
+	operator Token
+	right    Expr
 }
 
 type Grouping struct {
-  expression Expr
+	expression Expr
 }
 
 type Literal struct {
-  value interface{}
+	value interface{}
 }
 
 type Unary struct {
-  operator Token
-  right Expr
+	operator Token
+	right    Expr
 }
-
