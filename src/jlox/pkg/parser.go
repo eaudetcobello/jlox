@@ -1,9 +1,20 @@
 package jlox
 
+import (
+	"strconv"
+)
+
 type Parser struct {
 	Tokens  []Token
 	Current int
 	Errors  ErrorList
+}
+
+func parseError(t Token, message string) *Error {
+	return &Error{
+		Msg:  "at line " + strconv.Itoa(t.Line) + ": " + message,
+		Line: t.Line,
+	}
 }
 
 func (p *Parser) parse() (Expr, ErrorList) {
@@ -88,6 +99,7 @@ func (p *Parser) unary() Expr {
 	if p.match(BANG, MINUS) {
 		operator := p.previous()
 		right := p.unary()
+
 		return Unary{
 			operator,
 			right,
@@ -120,6 +132,7 @@ func (p *Parser) primary() Expr {
 		if err := p.consume(RIGHT_PARENS); err != nil {
 			p.Errors.Add(err)
 			p.synchronize()
+
 			return nil
 		}
 
@@ -133,6 +146,7 @@ func (p *Parser) match(types ...TokenType) bool {
 	for _, t := range types {
 		if p.check(t) {
 			p.advance()
+
 			return true
 		}
 	}
@@ -142,11 +156,9 @@ func (p *Parser) match(types ...TokenType) bool {
 
 func (p *Parser) consume(t TokenType) error {
 	if !p.match(t) {
-		err := &Error{"Expected token of type " + t.String()}
-		p.Errors.Add(err)
-		p.synchronize()
-		return err
+		return parseError(p.previous(), "Expected "+t.String())
 	}
+
 	return nil
 }
 
@@ -174,6 +186,7 @@ func (p *Parser) advance() Token {
 	if !p.isAtEnd() {
 		p.Current++
 	}
+
 	return p.previous()
 }
 

@@ -85,7 +85,7 @@ func TestScanTokensInPrompt(t *testing.T) {
 				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
 			},
 			expectedErrs: &ErrorList{
-				&Error{"unterminated string"},
+				&Error{Msg: "unterminated string", Line: 1},
 			},
 		},
 		{

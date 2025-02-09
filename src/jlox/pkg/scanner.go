@@ -91,6 +91,7 @@ func (s *Scanner) peek() rune {
 	if s.isAtEnd() {
 		return '\x00'
 	}
+
 	return rune(s.Source[s.Current])
 }
 
@@ -112,7 +113,7 @@ func (s *Scanner) string() error {
 	}
 
 	if s.isAtEnd() {
-		return &Error{"unterminated string"}
+		return &Error{Msg: "unterminated string", Line: 1}
 	}
 
 	s.eatCharacter()
@@ -138,7 +139,7 @@ func (s *Scanner) number() *Error {
 
 	v, err := strconv.ParseFloat(s.Source[s.Start:s.Current], 64)
 	if err != nil {
-		return &Error{"could not parse number"}
+		return &Error{Msg: "could not parse number", Line: s.Line}
 	}
 
 	s.addToken(NUMBER, v)
@@ -158,6 +159,7 @@ func (s *Scanner) identifier() *Error {
 	// is the identifier a known keyword
 	if tokenType, ok := keywords[text]; ok {
 		s.addTokenNoLiteral(tokenType)
+
 		return nil
 	}
 
@@ -242,7 +244,7 @@ func (s *Scanner) scanToken() error {
 		} else if unicode.IsLetter(char) {
 			s.identifier()
 		} else {
-			return &Error{fmt.Sprintf("unexpected character %s", string(char))}
+			return &Error{Msg: fmt.Sprintf("unexpected character %s", string(char)), Line: 1}
 		}
 	}
 

@@ -17,7 +17,7 @@ var runCmd = &cobra.Command{
 	Short: "Run a jlox file",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 1 {
-			if err := jlox.RunFile(args[0]); err != nil {
+			if err := jlox.RunFile(os.Stdin, os.Stdout, os.Stderr, args[0]); err != nil {
 				fmt.Println(fmt.Errorf("could not run file: %s", err))
 				os.Exit(1)
 			}

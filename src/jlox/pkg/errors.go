@@ -9,7 +9,8 @@ import (
 // https://cs.opensource.google/go/go/+/refs/tags/go1.22.6:src/go/scanner/errors.go
 
 type Error struct {
-	Msg string
+	Msg  string
+	Line int
 }
 
 func (e *Error) Error() string {

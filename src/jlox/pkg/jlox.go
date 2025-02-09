@@ -10,13 +10,15 @@ import (
 
 type JLox struct{}
 
-func RunFile(fileName string) error {
+func RunFile(stdin io.Reader, stdout io.Writer, stderr io.Writer, fileName string) error {
 	fileContent, err := cmdutil.ReadFile(fileName)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(string(fileContent))
+	if errs := Run(string(fileContent)); errs != nil {
+		PrintError(stderr, errs)
+	}
 
 	return nil
 }
@@ -64,6 +66,7 @@ func Run(s string) ErrorList {
 
 	if ast, err = parser.parse(); err != nil {
 		fmt.Println("Error parsing")
+
 		return err
 	}
 
