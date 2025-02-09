@@ -8,9 +8,11 @@ type Parser struct {
 
 func (p *Parser) parse() (Expr, ErrorList) {
 	expr := p.expression()
+
 	if len(p.Errors) > 0 {
 		return nil, p.Errors
 	}
+
 	return expr, nil
 }
 
@@ -114,11 +116,13 @@ func (p *Parser) primary() Expr {
 
 	if p.match(LEFT_PARENS) {
 		expr := p.expression()
+
 		if err := p.consume(RIGHT_PARENS); err != nil {
 			p.Errors.Add(err)
 			p.synchronize()
 			return nil
 		}
+
 		return Grouping{expr}
 	}
 

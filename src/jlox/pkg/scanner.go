@@ -107,6 +107,7 @@ func (s *Scanner) string() error {
 		if s.peek() == '\n' {
 			s.Line++ // @We should store a string's first and last line
 		}
+
 		s.eatCharacter()
 	}
 
@@ -139,6 +140,7 @@ func (s *Scanner) number() *Error {
 	if err != nil {
 		return &Error{"could not parse number"}
 	}
+
 	s.addToken(NUMBER, v)
 
 	return nil
@@ -189,26 +191,34 @@ func (s *Scanner) scanToken() error {
 	case '!':
 		if s.ifMatchEat('=') {
 			s.addTokenNoLiteral(BANG_EQUAL)
+
 			break
 		}
+
 		s.addTokenNoLiteral(BANG)
 	case '=':
 		if s.ifMatchEat('=') {
 			s.addTokenNoLiteral(EQUAL_EQUAL)
+
 			break
 		}
+
 		s.addTokenNoLiteral(EQUAL)
 	case '<':
 		if s.ifMatchEat('=') {
 			s.addTokenNoLiteral(LESS_EQUAL)
+
 			break
 		}
+
 		s.addTokenNoLiteral(LESS)
 	case '>':
 		if s.ifMatchEat('=') {
 			s.addTokenNoLiteral(GREATER_EQUAL)
+
 			break
 		}
+
 		s.addTokenNoLiteral(GREATER)
 	case '"':
 		return s.string()
@@ -217,8 +227,10 @@ func (s *Scanner) scanToken() error {
 			for s.peek() != '\n' && !s.isAtEnd() {
 				s.eatCharacter()
 			}
+
 			break
 		}
+
 		s.addTokenNoLiteral(SLASH)
 	case ' ', '\r', '\t':
 		break

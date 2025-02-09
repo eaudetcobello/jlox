@@ -15,6 +15,7 @@ func TestScanErrorsInPrompt(t *testing.T) {
 
 	g.Expect(errs).To(HaveLen(3))
 	g.Expect(errs).To(MatchError("error: unexpected character ~ (and 2 more errors)"))
+
 	for _, err := range errs {
 		g.Expect(err).To(HaveOccurred())
 		g.Expect(err).To(MatchError("error: unexpected character ~"))
@@ -189,11 +190,13 @@ def"`,
 		t.Run(fmt.Sprintf("scan %s", tc.source), func(t *testing.T) {
 			s := NewScanner(tc.source)
 			err := s.scanTokens()
+
 			if tc.expectedErrs == nil {
 				g.Expect(err).To(BeNil())
 			} else {
 				g.Expect(err).To(Equal(*tc.expectedErrs))
 			}
+
 			g.Expect(s.Tokens).To(Equal(tc.expectedTokens))
 		})
 	}

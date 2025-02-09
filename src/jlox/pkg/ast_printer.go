@@ -21,11 +21,13 @@ func (p *AstPrinter) Print(expr Expr) string {
 	default:
 		return "Unknown Expression"
 	}
+
 	return p.parenthesize(text, expr)
 }
 
 func (p *AstPrinter) parenthesize(name string, exprs ...Expr) string {
 	var builder strings.Builder
+
 	builder.WriteString("(")
 	builder.WriteString(name)
 
@@ -35,6 +37,7 @@ func (p *AstPrinter) parenthesize(name string, exprs ...Expr) string {
 	}
 
 	builder.WriteString(")")
+
 	return builder.String()
 }
 
@@ -48,6 +51,7 @@ func (p *AstPrinter) stringify(expr Expr) string {
 		if e.value == nil {
 			return "nil"
 		}
+
 		return fmt.Sprintf("%v", e.value)
 	case Unary:
 		return p.parenthesize(e.operator.Lexeme, e.right)

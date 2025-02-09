@@ -24,7 +24,9 @@ func RunFile(fileName string) error {
 func RunPrompt(stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
 	for {
 		r := bufio.NewReader(stdin)
+
 		fmt.Fprint(stdout, "> ")
+
 		s, _ := r.ReadString('\n')
 		if s == "" {
 			break
@@ -57,7 +59,9 @@ func Run(s string) ErrorList {
 	}
 
 	var ast Expr
+
 	var err ErrorList
+
 	if ast, err = parser.parse(); err != nil {
 		fmt.Println("Error parsing")
 		return err

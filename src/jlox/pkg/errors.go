@@ -33,6 +33,7 @@ func (p ErrorList) Error() string {
 	case 1:
 		return p[0].Error()
 	}
+
 	return fmt.Sprintf("%s (and %d more errors)", p[0], len(p)-1)
 }
 
@@ -40,6 +41,7 @@ func (p ErrorList) Err() error {
 	if len(p) == 0 {
 		return nil
 	}
+
 	return p
 }
 

@@ -8,7 +8,7 @@ import (
 
 // Parses a string in the format:
 // Binary : left Expr, operator Token, right Expr
-// Into a valid go struct definition
+// Into a valid go struct definition.
 func defineType(builder *strings.Builder, structName string, fields string) error {
 	var tempBuilder strings.Builder
 
@@ -22,6 +22,7 @@ func defineType(builder *strings.Builder, structName string, fields string) erro
 		if len(parts) == 2 {
 			name, fieldType := parts[0], parts[1]
 			tempBuilder.WriteString(fmt.Sprintf("  %s %s\n", name, fieldType))
+
 			continue
 		}
 
