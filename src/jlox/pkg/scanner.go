@@ -234,6 +234,10 @@ func (s *Scanner) scanToken() error {
 		}
 
 		s.addTokenNoLiteral(SLASH)
+	case ':':
+		s.addTokenNoLiteral(COLON)
+	case '?':
+		s.addTokenNoLiteral(QUESTION_MARK)
 	case ' ', '\r', '\t':
 		break
 	case '\n':

@@ -18,6 +18,10 @@ func (p *AstPrinter) Print(expr Expr) string {
 		text = "Literal"
 	case Unary:
 		text = "Unary"
+	case Block:
+		text = "Block"
+	case Conditional:
+		text = "Conditional"
 	default:
 		return "Unknown Expression"
 	}
@@ -47,6 +51,10 @@ func (p *AstPrinter) stringify(expr Expr) string {
 		return p.parenthesize(e.operator.Lexeme, e.left, e.right)
 	case Grouping:
 		return p.parenthesize("group", e.expression)
+	case Block:
+		return p.parenthesize("block", e.expressions...)
+	case Conditional:
+		return p.parenthesize("conditional", e.condition, e.trueBranch, e.falseBranch)
 	case Literal:
 		if e.value == nil {
 			return "nil"

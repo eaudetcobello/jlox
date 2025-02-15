@@ -28,7 +28,40 @@ func (p *Parser) parse() (Expr, ErrorList) {
 }
 
 func (p *Parser) expression() Expr {
-	return p.equality()
+	expr := p.equality()
+
+	if p.match(QUESTION_MARK) {
+		trueBranch := p.expression()
+
+		if err := p.consume(COLON); err != nil {
+			p.Errors.Add(err)
+			p.synchronize()
+
+			return nil
+		}
+
+		falseBranch := p.expression()
+
+		return Conditional{
+			expr,
+			trueBranch,
+			falseBranch,
+		}
+	}
+
+	if p.match(COMMA) {
+		expressions := []Expr{expr}
+
+		expressions = append(expressions, p.expression())
+
+		for p.match(COMMA) {
+			expressions = append(expressions, p.expression())
+		}
+
+		return Block{expressions}
+	}
+
+	return expr
 }
 
 func (p *Parser) equality() Expr {

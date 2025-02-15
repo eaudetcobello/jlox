@@ -12,6 +12,16 @@ type Grouping struct {
 	expression Expr
 }
 
+type Block struct {
+	expressions []Expr
+}
+
+type Conditional struct {
+	condition   Expr
+	trueBranch  Expr
+	falseBranch Expr
+}
+
 type Literal struct {
 	value interface{}
 }

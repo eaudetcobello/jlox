@@ -25,6 +25,7 @@ const (
 	DOT
 	MINUS
 	PLUS
+	COLON
 	SEMICOLON
 	SLASH
 	STAR
@@ -58,6 +59,8 @@ const (
 	TRUE
 	VAR
 	WHILE
+
+	QUESTION_MARK
 
 	EOF
 )
@@ -99,6 +102,8 @@ func (t TokenType) String() string {
 		return "MINUS"
 	case PLUS:
 		return "PLUS"
+	case COLON:
+		return "COLON"
 	case SEMICOLON:
 		return "SEMICOLON"
 	case SLASH:
@@ -161,6 +166,8 @@ func (t TokenType) String() string {
 		return "WHILE"
 	case EOF:
 		return "EOF"
+	case QUESTION_MARK:
+		return "QUESTION_MARK"
 	default:
 		return "UNKNOWN"
 	}
