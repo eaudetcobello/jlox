@@ -213,6 +213,10 @@ func (p *Parser) consume(t TokenType) error {
 
 func (p *Parser) check(t TokenType) bool {
 	if p.isAtEnd() {
+		if t == EOF {
+			return true
+		}
+
 		return false
 	}
 
@@ -232,7 +236,7 @@ func (p *Parser) previous() Token {
 }
 
 func (p *Parser) advance() Token {
-	if !p.isAtEnd() {
+	if p.Current < len(p.Tokens) {
 		p.Current++
 	}
 

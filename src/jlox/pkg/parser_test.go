@@ -85,6 +85,11 @@ func TestAdvance(t *testing.T) {
 		TokenType: EOF, Lexeme: "", Literal: nil, Line: 1,
 	}))
 	g.Expect(p.Current).To(Equal(2))
+
+	g.Expect(p.advance()).To(Equal(Token{
+		TokenType: EOF, Lexeme: "", Literal: nil, Line: 1,
+	}))
+	g.Expect(p.Current).To(Equal(2))
 }
 
 func TestMatch(t *testing.T) {
@@ -108,5 +113,39 @@ func TestMatch(t *testing.T) {
 
 	isMatch = p.match(EOF)
 	g.Expect(isMatch).To(BeTrue())
-	g.Expect(p.Current).To(Equal(1))
+	g.Expect(p.Current).To(Equal(2))
+}
+
+func TestBinary(t *testing.T) {
+	g := NewWithT(t)
+
+	tests := []struct {
+		input    string
+		expected Binary
+	}{
+		{
+			input: "2 + 2",
+			expected: Binary{
+				left:     Literal{2.0},
+				operator: Token{TokenType: PLUS, Lexeme: "+", Literal: nil, Line: 1},
+				right:    Literal{2.0},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		scanner := NewScanner(tt.input)
+
+		scanner.scanTokens()
+
+		p := Parser{
+			Tokens:  scanner.Tokens,
+			Current: 0,
+		}
+
+		expr, errs := p.parse()
+
+		g.Expect(expr).To(Equal(tt.expected))
+		g.Expect(errs).To(BeNil())
+	}
 }
