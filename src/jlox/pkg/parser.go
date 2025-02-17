@@ -28,6 +28,34 @@ func (p *Parser) parse() (Expr, ErrorList) {
 }
 
 func (p *Parser) expression() Expr {
+	expr := p.comma()
+
+	return expr
+}
+
+func (p *Parser) comma() Expr {
+	expr := p.ternary()
+
+	if p.match(COMMA) {
+		var expressions []Expr
+
+		expressions = append(expressions, expr)
+
+		for {
+			expressions = append(expressions, p.ternary())
+
+			if !p.match(COMMA) {
+				break
+			}
+		}
+
+		return Comma{expressions}
+	}
+
+	return expr
+}
+
+func (p *Parser) ternary() Expr {
 	expr := p.equality()
 
 	if p.match(QUESTION_MARK) {
@@ -47,18 +75,6 @@ func (p *Parser) expression() Expr {
 			trueBranch,
 			falseBranch,
 		}
-	}
-
-	if p.match(COMMA) {
-		expressions := []Expr{expr}
-
-		expressions = append(expressions, p.expression())
-
-		for p.match(COMMA) {
-			expressions = append(expressions, p.expression())
-		}
-
-		return Block{expressions}
 	}
 
 	return expr

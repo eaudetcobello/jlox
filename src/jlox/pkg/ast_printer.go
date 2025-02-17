@@ -8,32 +8,17 @@ import (
 type AstPrinter struct{}
 
 func (p *AstPrinter) Print(expr Expr) string {
-	var text string
-	switch expr.(type) {
-	case Binary:
-		text = "Binary"
-	case Grouping:
-		text = "Grouping"
-	case Literal:
-		text = "Literal"
-	case Unary:
-		text = "Unary"
-	case Block:
-		text = "Block"
-	case Conditional:
-		text = "Conditional"
-	default:
-		return "Unknown Expression"
-	}
-
-	return p.parenthesize(text, expr)
+	return p.stringify(expr)
 }
 
 func (p *AstPrinter) parenthesize(name string, exprs ...Expr) string {
 	var builder strings.Builder
 
 	builder.WriteString("(")
-	builder.WriteString(name)
+
+	if name != "" {
+		builder.WriteString(name)
+	}
 
 	for _, expr := range exprs {
 		builder.WriteString(" ")
@@ -51,8 +36,8 @@ func (p *AstPrinter) stringify(expr Expr) string {
 		return p.parenthesize(e.operator.Lexeme, e.left, e.right)
 	case Grouping:
 		return p.parenthesize("group", e.expression)
-	case Block:
-		return p.parenthesize("block", e.expressions...)
+	case Comma:
+		return p.parenthesize("comma", e.Expressions...)
 	case Conditional:
 		return p.parenthesize("conditional", e.condition, e.trueBranch, e.falseBranch)
 	case Literal:

@@ -12,8 +12,8 @@ type Grouping struct {
 	expression Expr
 }
 
-type Block struct {
-	expressions []Expr
+type Comma struct {
+	Expressions []Expr
 }
 
 type Conditional struct {
