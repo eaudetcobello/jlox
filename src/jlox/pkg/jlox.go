@@ -23,7 +23,7 @@ func RunFile(stdin io.Reader, stdout io.Writer, stderr io.Writer, fileName strin
 	return nil
 }
 
-func RunPrompt(stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
+func RunInteractive(stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
 	for {
 		r := bufio.NewReader(stdin)
 

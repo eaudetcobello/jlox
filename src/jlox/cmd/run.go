@@ -11,11 +11,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var code string
+
 // runCmd represents the run command.
 var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run a jlox file",
 	Run: func(cmd *cobra.Command, args []string) {
+		if code != "" {
+			if errs := jlox.Run(code); errs != nil {
+				fmt.Println(fmt.Errorf("could not run code: %s", errs))
+				os.Exit(1)
+			}
+			os.Exit(0)
+		}
+
 		if len(args) == 1 {
 			if err := jlox.RunFile(os.Stdin, os.Stdout, os.Stderr, args[0]); err != nil {
 				fmt.Println(fmt.Errorf("could not run file: %s", err))
@@ -24,7 +34,7 @@ var runCmd = &cobra.Command{
 			os.Exit(0)
 		}
 
-		if err := jlox.RunPrompt(os.Stdin, os.Stdout, os.Stderr); err != nil {
+		if err := jlox.RunInteractive(os.Stdin, os.Stdout, os.Stderr); err != nil {
 			fmt.Println(fmt.Errorf("could not run prompt: %s", err))
 			os.Exit(1)
 		}
@@ -32,5 +42,6 @@ var runCmd = &cobra.Command{
 }
 
 func init() {
+	runCmd.Flags().StringVarP(&code, "code", "c", "", "jlox code to run directly")
 	rootCmd.AddCommand(runCmd)
 }
