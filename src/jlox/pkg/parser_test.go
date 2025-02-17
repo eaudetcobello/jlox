@@ -116,20 +116,32 @@ func TestMatch(t *testing.T) {
 	g.Expect(p.Current).To(Equal(2))
 }
 
-func TestBinary(t *testing.T) {
+func TestAst(t *testing.T) {
 	g := NewWithT(t)
 
 	tests := []struct {
 		input    string
-		expected Binary
+		expected string
 	}{
 		{
-			input: "2 + 2",
-			expected: Binary{
-				left:     Literal{2.0},
-				operator: Token{TokenType: PLUS, Lexeme: "+", Literal: nil, Line: 1},
-				right:    Literal{2.0},
-			},
+			input:    "2 + 2",
+			expected: "(+ 2 2)",
+		},
+		{
+			input:    "2 * 2 + 2",
+			expected: "(+ (* 2 2) 2)",
+		},
+		{
+			input:    "(2 * 2 + 2) ? 1 : 1",
+			expected: "(conditional (group (+ (* 2 2) 2)) 1 1)",
+		},
+		{
+			input:    "2 * 2 + 2 ? 1 : 1",
+			expected: "(conditional (+ (* 2 2) 2) 1 1)",
+		},
+		{
+			input:    "2 + 2,2,2,5 + 1",
+			expected: "(comma (+ 2 2) 2 2 (+ 5 1))",
 		},
 	}
 
@@ -145,7 +157,9 @@ func TestBinary(t *testing.T) {
 
 		expr, errs := p.parse()
 
-		g.Expect(expr).To(Equal(tt.expected))
+		astPrinter := AstPrinter{}
+
+		g.Expect(astPrinter.Print(expr)).To(Equal(tt.expected))
 		g.Expect(errs).To(BeNil())
 	}
 }
