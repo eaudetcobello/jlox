@@ -2,6 +2,7 @@ package jlox
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -46,144 +47,115 @@ func TestScanNonASCIIOutsideString(t *testing.T) {
 	g.Expect(s.Tokens).To(HaveLen(2))
 }
 
-func TestScanTokensInPrompt(t *testing.T) {
-	g := NewWithT(t)
+// tokenStrings renders tokens as "TYPE lexeme" so tests can ignore literal and line.
+func tokenStrings(tokens []Token) []string {
+	out := make([]string, len(tokens))
+	for i, t := range tokens {
+		out[i] = strings.TrimSpace(t.TokenType.String() + " " + t.Lexeme)
+	}
 
+	return out
+}
+
+func TestScanTokensInPrompt(t *testing.T) {
 	for _, tc := range []struct {
-		source         string
-		expectedTokens []Token
-		expectedErrs   *ErrorList
+		source   string
+		want     []string
+		wantErrs ErrorList
 	}{
 		{
 			source: "if and or ifandor",
-			expectedTokens: []Token{
-				{TokenType: IF, Lexeme: "if", Literal: nil, Line: 1},
-				{TokenType: AND, Lexeme: "and", Literal: nil, Line: 1},
-				{TokenType: OR, Lexeme: "or", Literal: nil, Line: 1},
-				{TokenType: IDENTIFIER, Lexeme: "ifandor", Literal: nil, Line: 1},
-				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
-			},
+			want:   []string{"IF if", "AND and", "OR or", "IDENTIFIER ifandor", "EOF"},
 		},
 		{
-			source: "123.4\"",
-			expectedTokens: []Token{
-				{TokenType: NUMBER, Lexeme: "123.4", Literal: 123.4, Line: 1},
-				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
-			},
-			expectedErrs: &ErrorList{
-				&Error{Msg: "unterminated string", Line: 1},
-			},
-		},
-		{
-			source: `"abc
-def"`,
-			expectedTokens: []Token{
-				{TokenType: STRING, Lexeme: "\"abc\ndef\"", Literal: "abc\ndef", Line: 2},
-				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 2},
-			},
+			source:   "123.4\"",
+			want:     []string{"NUMBER 123.4", "EOF"},
+			wantErrs: ErrorList{&Error{Msg: "unterminated string", Line: 1}},
 		},
 		{
 			source: "<>!==!.{=}==<=>=+-;/*,",
-			expectedTokens: []Token{
-				{TokenType: LESS, Lexeme: "<", Literal: nil, Line: 1},
-				{TokenType: GREATER, Lexeme: ">", Literal: nil, Line: 1},
-				{TokenType: BANG_EQUAL, Lexeme: "!=", Literal: nil, Line: 1},
-				{TokenType: EQUAL, Lexeme: "=", Literal: nil, Line: 1},
-				{TokenType: BANG, Lexeme: "!", Literal: nil, Line: 1},
-				{TokenType: DOT, Lexeme: ".", Literal: nil, Line: 1},
-				{TokenType: LEFT_BRACE, Lexeme: "{", Literal: nil, Line: 1},
-				{TokenType: EQUAL, Lexeme: "=", Literal: nil, Line: 1},
-				{TokenType: RIGHT_BRACE, Lexeme: "}", Literal: nil, Line: 1},
-				{TokenType: EQUAL_EQUAL, Lexeme: "==", Literal: nil, Line: 1},
-				{TokenType: LESS_EQUAL, Lexeme: "<=", Literal: nil, Line: 1},
-				{TokenType: GREATER_EQUAL, Lexeme: ">=", Literal: nil, Line: 1},
-				{TokenType: PLUS, Lexeme: "+", Literal: nil, Line: 1},
-				{TokenType: MINUS, Lexeme: "-", Literal: nil, Line: 1},
-				{TokenType: SEMICOLON, Lexeme: ";", Literal: nil, Line: 1},
-				{TokenType: SLASH, Lexeme: "/", Literal: nil, Line: 1},
-				{TokenType: STAR, Lexeme: "*", Literal: nil, Line: 1},
-				{TokenType: COMMA, Lexeme: ",", Literal: nil, Line: 1},
-				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
+			want: []string{
+				"LESS <", "GREATER >", "BANG_EQUAL !=", "EQUAL =", "BANG !", "DOT .",
+				"LEFT_BRACE {", "EQUAL =", "RIGHT_BRACE }", "EQUAL_EQUAL ==", "LESS_EQUAL <=",
+				"GREATER_EQUAL >=", "PLUS +", "MINUS -", "SEMICOLON ;", "SLASH /", "STAR *",
+				"COMMA ,", "EOF",
 			},
 		},
 		{
 			source: "(( )){}",
-			expectedTokens: []Token{
-				{TokenType: LEFT_PARENS, Lexeme: "(", Literal: nil, Line: 1},
-				{TokenType: LEFT_PARENS, Lexeme: "(", Literal: nil, Line: 1},
-				{TokenType: RIGHT_PARENS, Lexeme: ")", Literal: nil, Line: 1},
-				{TokenType: RIGHT_PARENS, Lexeme: ")", Literal: nil, Line: 1},
-				{TokenType: LEFT_BRACE, Lexeme: "{", Literal: nil, Line: 1},
-				{TokenType: RIGHT_BRACE, Lexeme: "}", Literal: nil, Line: 1},
-				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
+			want: []string{
+				"LEFT_PARENS (", "LEFT_PARENS (", "RIGHT_PARENS )", "RIGHT_PARENS )",
+				"LEFT_BRACE {", "RIGHT_BRACE }", "EOF",
 			},
 		},
 		{
-			source: "\"abc123\"",
-			expectedTokens: []Token{
-				{TokenType: STRING, Lexeme: "\"abc123\"", Literal: "abc123", Line: 1},
-				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
-			},
-		},
-		{
-			source: "123.4",
-			expectedTokens: []Token{
-				{TokenType: NUMBER, Lexeme: "123.4", Literal: 123.4, Line: 1},
-				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
-			},
-		},
-		{
-			source: "\"123.4\"",
-			expectedTokens: []Token{
-				{TokenType: STRING, Lexeme: "\"123.4\"", Literal: "123.4", Line: 1},
-				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
-			},
-		},
-		{
-			source: "\"123.4\" //comment 123.4",
-			expectedTokens: []Token{
-				{TokenType: STRING, Lexeme: "\"123.4\"", Literal: "123.4", Line: 1},
-				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
-			},
+			source: `"123.4" //comment 123.4`,
+			want:   []string{`STRING "123.4"`, "EOF"},
 		},
 		{
 			source: "//comment",
-			expectedTokens: []Token{
-				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
-			},
-		},
-		{
-			source: "\"\"",
-			expectedTokens: []Token{
-				{TokenType: STRING, Lexeme: "\"\"", Literal: "", Line: 1},
-				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
-			},
-		},
-		{
-			source: "\"    1 \"",
-			expectedTokens: []Token{
-				{TokenType: STRING, Lexeme: "\"    1 \"", Literal: "    1 ", Line: 1},
-				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
-			},
+			want:   []string{"EOF"},
 		},
 		{
 			source: "",
-			expectedTokens: []Token{
-				{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
-			},
+			want:   []string{"EOF"},
 		},
 	} {
-		t.Run(fmt.Sprintf("scan %s", tc.source), func(t *testing.T) {
-			s := NewScanner(tc.source)
-			err := s.scanTokens()
+		t.Run(fmt.Sprintf("scan %q", tc.source), func(t *testing.T) {
+			g := NewWithT(t)
 
-			if tc.expectedErrs == nil {
-				g.Expect(err).To(BeNil())
-			} else {
-				g.Expect(err).To(Equal(*tc.expectedErrs))
+			s := NewScanner(tc.source)
+			errs := s.scanTokens()
+
+			g.Expect(errs).To(Equal(tc.wantErrs))
+			g.Expect(tokenStrings(s.Tokens)).To(Equal(tc.want))
+		})
+	}
+}
+
+func TestScanLiterals(t *testing.T) {
+	for _, tc := range []struct {
+		source string
+		want   any
+	}{
+		{source: "123.4", want: 123.4},
+		{source: `"abc123"`, want: "abc123"},
+		{source: `"123.4"`, want: "123.4"},
+		{source: `""`, want: ""},
+		{source: `"    1 "`, want: "    1 "},
+	} {
+		t.Run(fmt.Sprintf("scan %q", tc.source), func(t *testing.T) {
+			g := NewWithT(t)
+
+			s := NewScanner(tc.source)
+
+			g.Expect(s.scanTokens()).To(BeNil())
+			g.Expect(s.Tokens).To(HaveLen(2))
+			g.Expect(s.Tokens[0].Literal).To(Equal(tc.want))
+		})
+	}
+}
+
+func TestScanLines(t *testing.T) {
+	for _, tc := range []struct {
+		source string
+		want   []int
+	}{
+		{source: "\"abc\ndef\"", want: []int{2, 2}},
+		{source: "1\n2", want: []int{1, 2, 2}},
+	} {
+		t.Run(fmt.Sprintf("scan %q", tc.source), func(t *testing.T) {
+			g := NewWithT(t)
+
+			s := NewScanner(tc.source)
+			g.Expect(s.scanTokens()).To(BeNil())
+
+			lines := make([]int, len(s.Tokens))
+			for i, tok := range s.Tokens {
+				lines[i] = tok.Line
 			}
 
-			g.Expect(s.Tokens).To(Equal(tc.expectedTokens))
+			g.Expect(lines).To(Equal(tc.want))
 		})
 	}
 }
