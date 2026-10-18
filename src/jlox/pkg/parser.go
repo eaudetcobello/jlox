@@ -233,7 +233,7 @@ func (p *Parser) previous() Token {
 }
 
 func (p *Parser) advance() Token {
-	if p.Current < len(p.Tokens) {
+	if !p.isAtEnd() {
 		p.Current++
 	}
 

@@ -24,9 +24,9 @@ func RunFile(stdin io.Reader, stdout io.Writer, stderr io.Writer, fileName strin
 }
 
 func RunInteractive(stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
-	for {
-		r := bufio.NewReader(stdin)
+	r := bufio.NewReader(stdin)
 
+	for {
 		fmt.Fprint(stdout, "> ")
 
 		s, _ := r.ReadString('\n')

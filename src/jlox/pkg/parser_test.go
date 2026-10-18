@@ -81,15 +81,10 @@ func TestAdvance(t *testing.T) {
 	}))
 	g.Expect(p.Current).To(Equal(1))
 
-	g.Expect(p.advance()).To(Equal(Token{
-		TokenType: EOF, Lexeme: "", Literal: nil, Line: 1,
-	}))
-	g.Expect(p.Current).To(Equal(2))
+	p.advance()
 
-	g.Expect(p.advance()).To(Equal(Token{
-		TokenType: EOF, Lexeme: "", Literal: nil, Line: 1,
-	}))
-	g.Expect(p.Current).To(Equal(2))
+	g.Expect(p.Current).To(Equal(1))
+	g.Expect(p.isAtEnd()).To(BeTrue())
 }
 
 func TestMatch(t *testing.T) {
@@ -113,7 +108,7 @@ func TestMatch(t *testing.T) {
 
 	isMatch = p.match(EOF)
 	g.Expect(isMatch).To(BeTrue())
-	g.Expect(p.Current).To(Equal(2))
+	g.Expect(p.Current).To(Equal(1))
 }
 
 func TestAst(t *testing.T) {

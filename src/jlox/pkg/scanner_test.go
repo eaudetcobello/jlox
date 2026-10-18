@@ -14,11 +14,11 @@ func TestScanErrorsInPrompt(t *testing.T) {
 	errs := scanner.scanTokens()
 
 	g.Expect(errs).To(HaveLen(3))
-	g.Expect(errs).To(MatchError("error: unexpected character ~ (and 2 more errors)"))
+	g.Expect(errs).To(MatchError("error: unexpected character '~' (and 2 more errors)"))
 
 	for _, err := range errs {
 		g.Expect(err).To(HaveOccurred())
-		g.Expect(err).To(MatchError("error: unexpected character ~"))
+		g.Expect(err).To(MatchError("error: unexpected character '~'"))
 	}
 
 	g.Expect(scanner.Tokens).To(HaveLen(4))
@@ -27,37 +27,23 @@ func TestScanErrorsInPrompt(t *testing.T) {
 func TestEatCharacter(t *testing.T) {
 	g := NewWithT(t)
 
-	s := NewScanner("a😅1+ ⌘ 語\n\t")
+	s := NewScanner("a1+")
 
-	char := s.eatCharacter()
-	g.Expect(char).To(Equal('a'))
+	g.Expect(s.eatCharacter()).To(Equal(byte('a')))
+	g.Expect(s.eatCharacter()).To(Equal(byte('1')))
+	g.Expect(s.eatCharacter()).To(Equal(byte('+')))
+	g.Expect(s.isAtEnd()).To(BeTrue())
+}
 
-	char = s.eatCharacter()
-	g.Expect(char).To(Equal('😅'))
+func TestScanNonASCIIOutsideString(t *testing.T) {
+	g := NewWithT(t)
 
-	char = s.eatCharacter()
-	g.Expect(char).To(Equal('1'))
+	s := NewScanner("a😅")
+	errs := s.scanTokens()
 
-	char = s.eatCharacter()
-	g.Expect(char).To(Equal('+'))
-
-	char = s.eatCharacter()
-	g.Expect(char).To(Equal(' '))
-
-	char = s.eatCharacter()
-	g.Expect(char).To(Equal('⌘'))
-
-	char = s.eatCharacter()
-	g.Expect(char).To(Equal(' '))
-
-	char = s.eatCharacter()
-	g.Expect(char).To(Equal('語'))
-
-	char = s.eatCharacter()
-	g.Expect(char).To(Equal('\n'))
-
-	char = s.eatCharacter()
-	g.Expect(char).To(Equal('\t'))
+	g.Expect(errs).To(HaveLen(1))
+	g.Expect(errs[0]).To(MatchError("error: unexpected character '😅'"))
+	g.Expect(s.Tokens).To(HaveLen(2))
 }
 
 func TestScanTokensInPrompt(t *testing.T) {

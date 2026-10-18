@@ -3,7 +3,6 @@ package jlox
 import (
 	"fmt"
 	"strconv"
-	"unicode"
 	"unicode/utf8"
 )
 
@@ -67,18 +66,19 @@ func (s *Scanner) scanTokens() ErrorList {
 	return nil
 }
 
-func (s *Scanner) eatCharacter() rune {
-	char, width := utf8.DecodeRuneInString(s.Source[s.Current:])
-	s.Current += width
-	return char
+func (s *Scanner) eatCharacter() byte {
+	c := s.Source[s.Current]
+	s.Current++
+
+	return c
 }
 
-func (s *Scanner) ifMatchEat(expected rune) bool {
+func (s *Scanner) ifMatchEat(expected byte) bool {
 	if s.isAtEnd() {
 		return false
 	}
 
-	if rune(s.Source[s.Current]) != expected {
+	if s.Source[s.Current] != expected {
 		return false
 	}
 
@@ -87,20 +87,20 @@ func (s *Scanner) ifMatchEat(expected rune) bool {
 	return true
 }
 
-func (s *Scanner) peek() rune {
+func (s *Scanner) peek() byte {
 	if s.isAtEnd() {
 		return '\x00'
 	}
 
-	return rune(s.Source[s.Current])
+	return s.Source[s.Current]
 }
 
-func (s *Scanner) peekNext() rune {
+func (s *Scanner) peekNext() byte {
 	if s.Current+1 >= len(s.Source) {
 		return '\x00'
 	}
 
-	return rune(s.Source[s.Current+1])
+	return s.Source[s.Current+1]
 }
 
 func (s *Scanner) string() error {
@@ -125,14 +125,14 @@ func (s *Scanner) string() error {
 }
 
 func (s *Scanner) number() *Error {
-	for unicode.IsDigit(s.peek()) {
+	for isDigit(s.peek()) {
 		s.eatCharacter()
 	}
 
-	if s.peek() == '.' && unicode.IsDigit(s.peekNext()) {
+	if s.peek() == '.' && isDigit(s.peekNext()) {
 		s.eatCharacter()
 
-		for unicode.IsDigit(s.peek()) {
+		for isDigit(s.peek()) {
 			s.eatCharacter()
 		}
 	}
@@ -149,7 +149,7 @@ func (s *Scanner) number() *Error {
 
 func (s *Scanner) identifier() *Error {
 	char := s.peek()
-	for unicode.IsLetter(char) || unicode.IsNumber(char) {
+	for isAlphaNumeric(char) {
 		s.eatCharacter()
 		char = s.peek()
 	}
@@ -243,14 +243,32 @@ func (s *Scanner) scanToken() error {
 	case '\n':
 		s.Line++
 	default:
-		if unicode.IsDigit(char) {
+		if isDigit(char) {
 			s.number()
-		} else if unicode.IsLetter(char) {
+		} else if isAlpha(char) {
 			s.identifier()
 		} else {
-			return &Error{Msg: fmt.Sprintf("unexpected character %s", string(char)), Line: 1}
+			// Failed to parse as ASCII, decode as UTF-8 to print correctly
+			r, width := utf8.DecodeRuneInString(s.Source[s.Start:])
+			s.Current = s.Start + width
+
+			return &Error{Msg: fmt.Sprintf("unexpected character %q", r), Line: s.Line}
 		}
 	}
 
 	return nil
+}
+
+// isAlpha reports whether c can start a Lox identifier.
+func isAlpha(c byte) bool {
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
+}
+
+// isDigit reports whether c is an ASCII digit.
+func isDigit(c byte) bool {
+	return c >= '0' && c <= '9'
+}
+
+func isAlphaNumeric(c byte) bool {
+	return isAlpha(c) || isDigit(c)
 }
