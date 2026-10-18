@@ -23,7 +23,9 @@ var generateASTCmd = &cobra.Command{
 		if err := jlox.GenerateAst(filename, []string{
 			"Binary : left Expr, operator Token , right Expr",
 			"Grouping : expression Expr",
-			"Literal : value interface{}",
+			"Literal : value any",
+			"Comma : Expressions []Expr",
+			"Conditional : condition Expr, trueBranch Expr, falseBranch Expr",
 			"Unary : operator Token, right Expr",
 		}); err != nil {
 			fmt.Println("Error: ", err)

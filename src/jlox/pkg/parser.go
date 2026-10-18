@@ -1,6 +1,7 @@
 package jlox
 
 import (
+	"slices"
 	"strconv"
 )
 
@@ -188,16 +189,16 @@ func (p *Parser) primary() Expr {
 		return Grouping{expr}
 	}
 
+	p.Errors.Add(parseError(p.peek(), "Expect expression."))
+
 	return nil
 }
 
 func (p *Parser) match(types ...TokenType) bool {
-	for _, t := range types {
-		if p.check(t) {
-			p.advance()
+	if slices.ContainsFunc(types, p.check) {
+		p.advance()
 
-			return true
-		}
+		return true
 	}
 
 	return false
@@ -213,11 +214,7 @@ func (p *Parser) consume(t TokenType) error {
 
 func (p *Parser) check(t TokenType) bool {
 	if p.isAtEnd() {
-		if t == EOF {
-			return true
-		}
-
-		return false
+		return t == EOF
 	}
 
 	return p.peek().TokenType == t

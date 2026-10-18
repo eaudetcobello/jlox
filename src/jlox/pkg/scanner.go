@@ -27,7 +27,7 @@ func NewScanner(source string) *Scanner {
 	}
 }
 
-func (s *Scanner) addToken(t TokenType, literal interface{}) {
+func (s *Scanner) addToken(t TokenType, literal any) {
 	s.Tokens = append(s.Tokens, Token{
 		TokenType: t,
 		Lexeme:    s.Source[s.Start:s.Current],
