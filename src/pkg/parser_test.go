@@ -1,6 +1,7 @@
 package jlox
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -112,8 +113,6 @@ func TestMatch(t *testing.T) {
 }
 
 func TestAst(t *testing.T) {
-	g := NewWithT(t)
-
 	tests := []struct {
 		input    string
 		expected string
@@ -149,18 +148,17 @@ func TestAst(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		scanner := NewScanner(tt.input)
+		t.Run(fmt.Sprintf("parse %q", tt.input), func(t *testing.T) {
+			g := NewWithT(t)
 
-		scanner.scanTokens()
+			scanner := NewScanner(tt.input)
+			g.Expect(scanner.scanTokens()).To(BeNil())
 
-		p := Parser{
-			Tokens:  scanner.Tokens,
-			Current: 0,
-		}
+			p := Parser{Tokens: scanner.Tokens}
+			expr, errs := p.parse()
 
-		expr, errs := p.parse()
-
-		g.Expect(PrintAST(expr)).To(Equal(tt.expected))
-		g.Expect(errs).To(BeNil())
+			g.Expect(errs).To(BeNil())
+			g.Expect(PrintAST(expr)).To(Equal(tt.expected))
+		})
 	}
 }
