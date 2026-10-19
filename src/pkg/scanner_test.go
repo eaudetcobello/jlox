@@ -15,11 +15,11 @@ func TestScanErrorsInPrompt(t *testing.T) {
 	errs := scanner.scanTokens()
 
 	g.Expect(errs).To(HaveLen(3))
-	g.Expect(errs).To(MatchError("error: unexpected character '~' (and 2 more errors)"))
+	g.Expect(errs).To(MatchError("[line 1] error: unexpected character '~' (and 2 more errors)"))
 
 	for _, err := range errs {
 		g.Expect(err).To(HaveOccurred())
-		g.Expect(err).To(MatchError("error: unexpected character '~'"))
+		g.Expect(err).To(MatchError("[line 1] error: unexpected character '~'"))
 	}
 
 	g.Expect(scanner.Tokens).To(HaveLen(4))
@@ -43,7 +43,7 @@ func TestScanNonASCIIOutsideString(t *testing.T) {
 	errs := s.scanTokens()
 
 	g.Expect(errs).To(HaveLen(1))
-	g.Expect(errs[0]).To(MatchError("error: unexpected character '😅'"))
+	g.Expect(errs[0]).To(MatchError("[line 1] error: unexpected character '😅'"))
 	g.Expect(s.Tokens).To(HaveLen(2))
 }
 
