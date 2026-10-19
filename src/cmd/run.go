@@ -16,18 +16,20 @@ var runCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if code != "" {
 			if errs := jlox.Run(code); errs != nil {
-				fmt.Println(fmt.Errorf("could not run code: %s", errs))
+				jlox.PrintError(os.Stderr, errs)
 				os.Exit(1)
 			}
-			os.Exit(0)
+
+			return
 		}
 
 		if len(args) == 1 {
-			if err := jlox.RunFile(os.Stdin, os.Stdout, os.Stderr, args[0]); err != nil {
-				fmt.Println(fmt.Errorf("could not run file: %s", err))
+			if err := jlox.RunFile(args[0]); err != nil {
+				jlox.PrintError(os.Stderr, err)
 				os.Exit(1)
 			}
-			os.Exit(0)
+
+			return
 		}
 
 		if err := jlox.RunInteractive(os.Stdin, os.Stdout, os.Stderr); err != nil {

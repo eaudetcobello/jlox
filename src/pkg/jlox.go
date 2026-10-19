@@ -7,17 +7,13 @@ import (
 	"os"
 )
 
-func RunFile(stdin io.Reader, stdout io.Writer, stderr io.Writer, fileName string) error {
+func RunFile(fileName string) error {
 	fileContent, err := os.ReadFile(fileName)
 	if err != nil {
 		return err
 	}
 
-	if errs := Run(string(fileContent)); errs != nil {
-		PrintError(stderr, errs)
-	}
-
-	return nil
+	return Run(string(fileContent))
 }
 
 func RunInteractive(stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
@@ -41,7 +37,7 @@ func RunInteractive(stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
 	return nil
 }
 
-func Run(s string) ErrorList {
+func Run(s string) error {
 	scanner := NewScanner(s)
 	if err := scanner.scanTokens(); err != nil {
 		return err
