@@ -142,6 +142,10 @@ func TestAst(t *testing.T) {
 			input:    "1 ? 2 : 3, 4",
 			expected: "(comma (conditional 1 2 3) 4)",
 		},
+		{
+			input:    "1 + (2 * 3)",
+			expected: "(+ 1 (group (* 2 3)))",
+		},
 	}
 
 	for _, tt := range tests {
@@ -156,9 +160,7 @@ func TestAst(t *testing.T) {
 
 		expr, errs := p.parse()
 
-		astPrinter := AstPrinter{}
-
-		g.Expect(astPrinter.Print(expr)).To(Equal(tt.expected))
+		g.Expect(PrintAST(expr)).To(Equal(tt.expected))
 		g.Expect(errs).To(BeNil())
 	}
 }

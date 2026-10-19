@@ -5,24 +5,15 @@ import (
 	"strings"
 )
 
-type AstPrinter struct{}
-
-func (p *AstPrinter) Print(expr Expr) string {
-	return p.stringify(expr)
-}
-
-func (p *AstPrinter) parenthesize(name string, exprs ...Expr) string {
+func parenthesizeAST(name string, exprs ...Expr) string {
 	var builder strings.Builder
 
 	builder.WriteString("(")
-
-	if name != "" {
-		builder.WriteString(name)
-	}
+	builder.WriteString(name)
 
 	for _, expr := range exprs {
 		builder.WriteString(" ")
-		builder.WriteString(p.stringify(expr))
+		builder.WriteString(PrintAST(expr))
 	}
 
 	builder.WriteString(")")
@@ -30,24 +21,27 @@ func (p *AstPrinter) parenthesize(name string, exprs ...Expr) string {
 	return builder.String()
 }
 
-func (p *AstPrinter) stringify(expr Expr) string {
+func PrintAST(expr Expr) string {
 	switch e := expr.(type) {
 	case Binary:
-		return p.parenthesize(e.operator.Lexeme, e.left, e.right)
+		return parenthesizeAST(e.operator.Lexeme, e.left, e.right)
 	case Grouping:
-		return p.parenthesize("group", e.expression)
+		return parenthesizeAST("group", e.expression)
 	case Comma:
-		return p.parenthesize("comma", e.Expressions...)
+		return parenthesizeAST("comma", e.Expressions...)
 	case Conditional:
-		return p.parenthesize("conditional", e.condition, e.trueBranch, e.falseBranch)
+		return parenthesizeAST("conditional", e.condition, e.trueBranch, e.falseBranch)
 	case Literal:
-		if e.value == nil {
+		switch v := e.value.(type) {
+		case nil:
 			return "nil"
+		case string:
+			return fmt.Sprintf("%q", v)
+		default:
+			return fmt.Sprintf("%v", v)
 		}
-
-		return fmt.Sprintf("%v", e.value)
 	case Unary:
-		return p.parenthesize(e.operator.Lexeme, e.right)
+		return parenthesizeAST(e.operator.Lexeme, e.right)
 	default:
 		return "Unknown Expression"
 	}

@@ -38,26 +38,20 @@ func RunInteractive(stdin io.Reader, stdout io.Writer, stderr io.Writer) {
 
 func Run(s string) error {
 	scanner := NewScanner(s)
-	if err := scanner.scanTokens(); err != nil {
-		return err
+	if errs := scanner.scanTokens(); errs != nil {
+		return errs
 	}
 
 	parser := Parser{
-		Tokens:  scanner.Tokens,
-		Current: 0,
-		Errors:  ErrorList{},
+		Tokens: scanner.Tokens,
 	}
 
-	var ast Expr
-
-	var err ErrorList
-
-	if ast, err = parser.parse(); err != nil {
-		return err
+	ast, errs := parser.parse()
+	if errs != nil {
+		return errs
 	}
 
-	astPrinter := AstPrinter{}
-	fmt.Println(astPrinter.Print(ast))
+	PrintAST(ast)
 
 	return nil
 }
