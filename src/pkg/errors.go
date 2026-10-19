@@ -13,6 +13,15 @@ type Error struct {
 	Line int
 }
 
+type RuntimeError struct {
+	Token Token
+	Msg   string
+}
+
+func (e *RuntimeError) Error() string {
+	return fmt.Sprintf("[line %d] error: %s", e.Token.Line, e.Msg)
+}
+
 func (e *Error) Error() string {
 	return fmt.Sprintf("[line %d] error: %v", e.Line, e.Msg)
 }
