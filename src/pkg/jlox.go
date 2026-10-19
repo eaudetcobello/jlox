@@ -16,25 +16,24 @@ func RunFile(fileName string) error {
 	return Run(string(fileContent))
 }
 
-func RunInteractive(stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
+// RunInteractive runs each line read from stdin until stdin ends or fails to read.
+func RunInteractive(stdin io.Reader, stdout io.Writer, stderr io.Writer) {
 	r := bufio.NewReader(stdin)
 
 	for {
 		fmt.Fprint(stdout, "> ")
 
+		// ReadString returns what it read before EOF or a read error, so an
+		// empty line with no newline means there is nothing left to run.
 		s, _ := r.ReadString('\n')
 		if s == "" {
-			break
+			return
 		}
 
 		if errs := Run(s); errs != nil {
 			PrintError(stderr, errs)
-
-			continue
 		}
 	}
-
-	return nil
 }
 
 func Run(s string) error {

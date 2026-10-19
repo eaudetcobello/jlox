@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	jlox "github.com/eaudetcobello/jlox/pkg"
@@ -32,10 +31,7 @@ var runCmd = &cobra.Command{
 			return
 		}
 
-		if err := jlox.RunInteractive(os.Stdin, os.Stdout, os.Stderr); err != nil {
-			fmt.Println(fmt.Errorf("could not run prompt: %s", err))
-			os.Exit(1)
-		}
+		jlox.RunInteractive(os.Stdin, os.Stdout, os.Stderr)
 	},
 }
 
