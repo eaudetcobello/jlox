@@ -22,13 +22,13 @@ jobs:
         go-version: '1.22'
 
     - name: Build
-      working-directory: src/jlox
+      working-directory: src
       run: go build -v ./...
 
     - name: Format
-      working-directory: src/jlox
+      working-directory: src
       run: go fmt ./...
 
     - name: Test
-      working-directory: src/jlox
+      working-directory: src
       run: go test ./...
