@@ -14,7 +14,7 @@ var runCmd = &cobra.Command{
 	Short: "Run a jlox file",
 	Run: func(cmd *cobra.Command, args []string) {
 		if code != "" {
-			if errs := jlox.Run(code); errs != nil {
+			if errs := jlox.Run(cmd.OutOrStdout(), code); errs != nil {
 				jlox.PrintError(os.Stderr, errs)
 				os.Exit(1)
 			}
@@ -23,7 +23,7 @@ var runCmd = &cobra.Command{
 		}
 
 		if len(args) == 1 {
-			if err := jlox.RunFile(args[0]); err != nil {
+			if err := jlox.RunFile(cmd.OutOrStdout(), args[0]); err != nil {
 				jlox.PrintError(os.Stderr, err)
 				os.Exit(1)
 			}

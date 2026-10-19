@@ -7,13 +7,13 @@ import (
 	"os"
 )
 
-func RunFile(fileName string) error {
+func RunFile(stdout io.Writer, fileName string) error {
 	fileContent, err := os.ReadFile(fileName)
 	if err != nil {
 		return err
 	}
 
-	return Run(string(fileContent))
+	return Run(stdout, string(fileContent))
 }
 
 // RunInteractive runs each line read from stdin until stdin ends or fails to read.
@@ -30,13 +30,13 @@ func RunInteractive(stdin io.Reader, stdout io.Writer, stderr io.Writer) {
 			return
 		}
 
-		if errs := Run(s); errs != nil {
+		if errs := Run(stdout, s); errs != nil {
 			PrintError(stderr, errs)
 		}
 	}
 }
 
-func Run(s string) error {
+func Run(stdout io.Writer, s string) error {
 	scanner := NewScanner(s)
 	if errs := scanner.scanTokens(); errs != nil {
 		return errs
@@ -51,7 +51,7 @@ func Run(s string) error {
 		return errs
 	}
 
-	PrintAST(ast)
+	fmt.Fprintln(stdout, PrintAST(ast))
 
 	return nil
 }
