@@ -1,6 +1,3 @@
-/*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -13,7 +10,6 @@ import (
 
 var code string
 
-// runCmd represents the run command.
 var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run a jlox file",

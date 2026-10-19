@@ -138,6 +138,10 @@ func TestAst(t *testing.T) {
 			input:    "2 + 2,2,2,5 + 1",
 			expected: "(comma (+ 2 2) 2 2 (+ 5 1))",
 		},
+		{
+			input:    "1 ? 2 : 3, 4",
+			expected: "(comma (conditional 1 2 3) 4)",
+		},
 	}
 
 	for _, tt := range tests {

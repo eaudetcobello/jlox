@@ -14,7 +14,7 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	return fmt.Sprintf("error: %v", e.Msg)
+	return fmt.Sprintf("[line %d] error: %v", e.Line, e.Msg)
 }
 
 type ErrorList []error

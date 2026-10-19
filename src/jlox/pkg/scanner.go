@@ -3,6 +3,7 @@ package jlox
 import (
 	"fmt"
 	"strconv"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -104,6 +105,8 @@ func (s *Scanner) peekNext() byte {
 }
 
 func (s *Scanner) string() error {
+	startLine := s.Line
+
 	for s.peek() != '"' && !s.isAtEnd() {
 		if s.peek() == '\n' {
 			s.Line++ // @We should store a string's first and last line
@@ -113,7 +116,7 @@ func (s *Scanner) string() error {
 	}
 
 	if s.isAtEnd() {
-		return &Error{Msg: "unterminated string", Line: 1}
+		return &Error{Msg: "unterminated string", Line: startLine}
 	}
 
 	s.eatCharacter()
@@ -124,7 +127,7 @@ func (s *Scanner) string() error {
 	return nil
 }
 
-func (s *Scanner) number() *Error {
+func (s *Scanner) number() {
 	for isDigit(s.peek()) {
 		s.eatCharacter()
 	}
@@ -137,17 +140,12 @@ func (s *Scanner) number() *Error {
 		}
 	}
 
-	v, err := strconv.ParseFloat(s.Source[s.Start:s.Current], 64)
-	if err != nil {
-		return &Error{Msg: "could not parse number", Line: s.Line}
-	}
-
+	// The lexeme is only ASCII digits with at most one inner '.', so parsing cannot fail.
+	v, _ := strconv.ParseFloat(s.Source[s.Start:s.Current], 64)
 	s.addToken(NUMBER, v)
-
-	return nil
 }
 
-func (s *Scanner) identifier() *Error {
+func (s *Scanner) identifier() {
 	char := s.peek()
 	for isAlphaNumeric(char) {
 		s.eatCharacter()
@@ -160,12 +158,10 @@ func (s *Scanner) identifier() *Error {
 	if tokenType, ok := keywords[text]; ok {
 		s.addTokenNoLiteral(tokenType)
 
-		return nil
+		return
 	}
 
 	s.addTokenNoLiteral(IDENTIFIER)
-
-	return nil
 }
 
 func (s *Scanner) scanToken() error {
@@ -252,7 +248,11 @@ func (s *Scanner) scanToken() error {
 			r, width := utf8.DecodeRuneInString(s.Source[s.Start:])
 			s.Current = s.Start + width
 
-			return &Error{Msg: fmt.Sprintf("unexpected character %q", r), Line: s.Line}
+			msg := fmt.Sprintf("unexpected character %q", r)
+			if unicode.IsPrint(r) {
+				msg = fmt.Sprintf("unexpected character '%c'", r)
+			}
+			return &Error{Msg: msg, Line: s.Line}
 		}
 	}
 

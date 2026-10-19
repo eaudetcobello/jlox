@@ -4,14 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-
-	cmdutil "github.com/eaudetcobello/jlox/util"
+	"os"
 )
 
-type JLox struct{}
-
 func RunFile(stdin io.Reader, stdout io.Writer, stderr io.Writer, fileName string) error {
-	fileContent, err := cmdutil.ReadFile(fileName)
+	fileContent, err := os.ReadFile(fileName)
 	if err != nil {
 		return err
 	}
@@ -50,10 +47,6 @@ func Run(s string) ErrorList {
 		return err
 	}
 
-	for i, t := range scanner.Tokens {
-		fmt.Printf("%d %s\n", i+1, t.String())
-	}
-
 	parser := Parser{
 		Tokens:  scanner.Tokens,
 		Current: 0,
@@ -65,8 +58,6 @@ func Run(s string) ErrorList {
 	var err ErrorList
 
 	if ast, err = parser.parse(); err != nil {
-		fmt.Println("Error parsing")
-
 		return err
 	}
 

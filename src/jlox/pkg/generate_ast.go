@@ -32,6 +32,8 @@ func defineType(builder *strings.Builder, structName string, fields string) erro
 
 	fmt.Fprint(&tempBuilder, "}\n\n")
 
+	fmt.Fprintf(&tempBuilder, "func (%s) expr() {}\n", structName)
+
 	builder.WriteString(tempBuilder.String())
 
 	return nil
@@ -44,7 +46,7 @@ func GenerateAst(outputFile string, types []string) error {
 
 	builder.WriteString("package jlox\n\n")
 
-	builder.WriteString("type Expr any\n\n")
+	builder.WriteString("type Expr interface { expr() } \n\n")
 
 	for _, t := range types {
 		structName := strings.ReplaceAll(strings.Split(t, ":")[0], " ", "")

@@ -2,7 +2,7 @@
 
 package jlox
 
-type Expr any
+type Expr interface{ expr() }
 
 type Binary struct {
 	left     Expr
@@ -10,17 +10,25 @@ type Binary struct {
 	right    Expr
 }
 
+func (Binary) expr() {}
+
 type Grouping struct {
 	expression Expr
 }
+
+func (Grouping) expr() {}
 
 type Literal struct {
 	value any
 }
 
+func (Literal) expr() {}
+
 type Comma struct {
 	Expressions []Expr
 }
+
+func (Comma) expr() {}
 
 type Conditional struct {
 	condition   Expr
@@ -28,7 +36,11 @@ type Conditional struct {
 	falseBranch Expr
 }
 
+func (Conditional) expr() {}
+
 type Unary struct {
 	operator Token
 	right    Expr
 }
+
+func (Unary) expr() {}

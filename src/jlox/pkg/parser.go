@@ -2,7 +2,6 @@ package jlox
 
 import (
 	"slices"
-	"strconv"
 )
 
 type Parser struct {
@@ -13,7 +12,7 @@ type Parser struct {
 
 func parseError(t Token, message string) *Error {
 	return &Error{
-		Msg:  "at line " + strconv.Itoa(t.Line) + ": " + message,
+		Msg:  message,
 		Line: t.Line,
 	}
 }
@@ -69,7 +68,7 @@ func (p *Parser) ternary() Expr {
 			return nil
 		}
 
-		falseBranch := p.expression()
+		falseBranch := p.ternary()
 
 		return Conditional{
 			expr,
