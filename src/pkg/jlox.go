@@ -4,17 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"os"
 )
-
-func RunFile(stdout io.Writer, fileName string) error {
-	fileContent, err := os.ReadFile(fileName)
-	if err != nil {
-		return err
-	}
-
-	return Run(stdout, string(fileContent))
-}
 
 // RunInteractive runs each line read from stdin until stdin ends or fails to read.
 func RunInteractive(stdin io.Reader, stdout io.Writer, stderr io.Writer) {
