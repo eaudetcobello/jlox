@@ -1,18 +1,19 @@
-.PHONY: go.fmt
-go.fmt:
-	go mod tidy
-	go fmt ./...
+.PHONY: build test fmt ast repl
 
-.PHONY: ast
-ast:
-	go run main.go generate-ast pkg/expr.go
-
-.PHONY: test
-test:
-	go test ./...
-
+# Builds the jlox binary into src/jlox. This is the default target.
 build:
 	go build .
 
-run-interactive: build
-	go run . run
+test:
+	go test ./...
+
+fmt:
+	go mod tidy
+	go fmt ./...
+
+# Regenerates pkg/expr.go from the node list in cmd/generate_ast.go.
+ast:
+	go run . generate-ast pkg/expr.go
+
+repl: build
+	./jlox run
