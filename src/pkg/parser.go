@@ -20,6 +20,10 @@ func parseError(t Token, message string) *Error {
 func (p *Parser) parse() (Expr, ErrorList) {
 	expr := p.expression()
 
+	if !p.isAtEnd() {
+		p.Errors.Add(parseError(p.peek(), "Expect end of expression."))
+	}
+
 	if len(p.Errors) > 0 {
 		return nil, p.Errors
 	}

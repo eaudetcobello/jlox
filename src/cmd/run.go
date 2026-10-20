@@ -26,7 +26,7 @@ var runCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		if err := jlox.Run(cmd.OutOrStdout(), source); err != nil {
+		if err := jlox.Run(cmd.OutOrStdout(), cmd.ErrOrStderr(), source); err != nil {
 			jlox.PrintError(cmd.ErrOrStderr(), err)
 			os.Exit(1)
 		}

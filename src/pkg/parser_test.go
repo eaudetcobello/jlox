@@ -7,112 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestIsAtEnd(t *testing.T) {
-	g := NewWithT(t)
-
-	p := Parser{
-		Tokens: []Token{
-			{TokenType: IF, Lexeme: "if", Literal: nil, Line: 1},
-			{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
-		},
-		Current: 0,
-	}
-
-	g.Expect(p.isAtEnd()).To(BeFalse())
-
-	p.advance()
-
-	g.Expect(p.isAtEnd()).To(BeTrue())
-}
-
-func TestCheck(t *testing.T) {
-	g := NewWithT(t)
-
-	p := Parser{
-		Tokens: []Token{
-			{TokenType: IF, Lexeme: "if", Literal: nil, Line: 1},
-			{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
-		},
-		Current: 0,
-	}
-
-	g.Expect(p.check(IF)).To(BeTrue())
-
-	p.advance()
-
-	g.Expect(p.check(EOF)).To(BeTrue())
-	g.Expect(p.check(IF)).To(BeFalse())
-}
-
-func TestPeek(t *testing.T) {
-	g := NewWithT(t)
-
-	p := Parser{
-		Tokens: []Token{
-			{TokenType: IF, Lexeme: "if", Literal: nil, Line: 1},
-			{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
-		},
-		Current: 0,
-	}
-
-	g.Expect(p.peek()).To(Equal(Token{
-		TokenType: IF, Lexeme: "if", Literal: nil, Line: 1,
-	}))
-
-	p.advance()
-
-	g.Expect(p.peek()).To(Equal(Token{
-		TokenType: EOF, Lexeme: "", Literal: nil, Line: 1,
-	}))
-}
-
-func TestAdvance(t *testing.T) {
-	g := NewWithT(t)
-
-	p := Parser{
-		Tokens: []Token{
-			{TokenType: IF, Lexeme: "if", Literal: nil, Line: 1},
-			{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
-		},
-		Current: 0,
-	}
-
-	g.Expect(p.advance()).To(Equal(Token{
-		TokenType: IF, Lexeme: "if", Literal: nil, Line: 1,
-	}))
-	g.Expect(p.Current).To(Equal(1))
-
-	p.advance()
-
-	g.Expect(p.Current).To(Equal(1))
-	g.Expect(p.isAtEnd()).To(BeTrue())
-}
-
-func TestMatch(t *testing.T) {
-	g := NewWithT(t)
-
-	p := Parser{
-		Tokens: []Token{
-			{TokenType: IF, Lexeme: "if", Literal: nil, Line: 1},
-			{TokenType: EOF, Lexeme: "", Literal: nil, Line: 1},
-		},
-		Current: 0,
-	}
-
-	isMatch := p.match(AND)
-	g.Expect(isMatch).To(BeFalse())
-	g.Expect(p.Current).To(Equal(0))
-
-	isMatch = p.match(OR, IF)
-	g.Expect(isMatch).To(BeTrue())
-	g.Expect(p.Current).To(Equal(1))
-
-	isMatch = p.match(EOF)
-	g.Expect(isMatch).To(BeTrue())
-	g.Expect(p.Current).To(Equal(1))
-}
-
-func TestAst(t *testing.T) {
+func TestAstSuccessful(t *testing.T) {
 	tests := []struct {
 		input    string
 		expected string
@@ -159,6 +54,31 @@ func TestAst(t *testing.T) {
 
 			g.Expect(errs).To(BeNil())
 			g.Expect(PrintAST(expr)).To(Equal(tt.expected))
+		})
+	}
+}
+
+func TestParseErrors(t *testing.T) {
+	for _, tt := range []struct {
+		input   string
+		message string
+	}{
+		{input: "2 . 2", message: "Expect end of expression."},
+		{input: "1 2", message: "Expect end of expression."},
+		{input: "1 +", message: "Expect expression."},
+		{input: "(1", message: "Expected RIGHT_PARENS"},
+	} {
+		t.Run(fmt.Sprintf("parse %q", tt.input), func(t *testing.T) {
+			g := NewWithT(t)
+
+			scanner := NewScanner(tt.input)
+			g.Expect(scanner.scanTokens()).To(BeNil())
+
+			p := Parser{Tokens: scanner.Tokens}
+			expr, errs := p.parse()
+
+			g.Expect(expr).To(BeNil())
+			g.Expect(errs).To(MatchError(ContainSubstring(tt.message)))
 		})
 	}
 }

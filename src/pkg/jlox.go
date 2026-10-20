@@ -20,13 +20,13 @@ func RunInteractive(stdin io.Reader, stdout io.Writer, stderr io.Writer) {
 			return
 		}
 
-		if errs := Run(stdout, s); errs != nil {
+		if errs := Run(stdout, stderr, s); errs != nil {
 			PrintError(stderr, errs)
 		}
 	}
 }
 
-func Run(stdout io.Writer, s string) error {
+func Run(stdout io.Writer, stderr io.Writer, s string) error {
 	scanner := NewScanner(s)
 	if errs := scanner.scanTokens(); errs != nil {
 		return errs
@@ -41,7 +41,12 @@ func Run(stdout io.Writer, s string) error {
 		return errs
 	}
 
-	fmt.Fprintln(stdout, PrintAST(ast))
+	result, err := evaluate(ast)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintln(stdout, result)
 
 	return nil
 }
